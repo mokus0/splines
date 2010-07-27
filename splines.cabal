@@ -1,0 +1,31 @@
+name:                   splines
+version:                0.0.0.1
+stability:              experimental
+
+cabal-version:          >= 1.2
+build-type:             Simple
+
+author:                 James Cook <mokus@deepbondi.net>
+maintainer:             James Cook <mokus@deepbondi.net>
+license:                Unspecified
+homepage:               /dev/null
+
+category:               Math, Graphics
+synopsis:               Very rough sketch of a spline library.
+description:            This is a very simple implementation of a 
+                        general-purpose splines library, just to get the code
+                        out there.  Its interface is very unstable and will 
+                        very likely change as new needs or better style ideas 
+                        come up.  Contributions, suggestions and/or feature 
+                        requests are welcome.
+
+Library
+  hs-source-dirs:       src
+  exposed-modules:      Math.Spline
+                        Math.Spline.Bezier
+                        Math.Spline.BSpline
+                        Math.Spline.Class
+                        Math.Spline.Knots
+                        Math.Spline.NURBS
+  other-modules:        Math.Spline.BSpline.Internal
+  build-depends:        base >= 3 && < 5, containers, vector-space
