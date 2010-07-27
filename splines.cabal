@@ -8,7 +8,7 @@ build-type:             Simple
 author:                 James Cook <mokus@deepbondi.net>
 maintainer:             James Cook <mokus@deepbondi.net>
 license:                Unspecified
-homepage:               /dev/null
+homepage:               http://code.haskell.org/~mokus/splines/
 
 category:               Math, Graphics
 synopsis:               Very rough sketch of a spline library.
