@@ -25,7 +25,7 @@ instance Show v => Show (Bezier v) where
         )
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier v where
-    splineDomain (Bezier _  _) = Just (1,0)
+    splineDomain (Bezier _  _) = Just (0,1)
     evalSpline   (Bezier _ cs) = head . last . deCasteljau cs
     splineDegree (Bezier p  _) = p
     knotVector   (Bezier p  _) = knotsFromListWithMultiplicity [(0, p+1), (1, p+1)]
