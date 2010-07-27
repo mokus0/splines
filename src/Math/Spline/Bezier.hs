@@ -26,15 +26,15 @@ instance Show v => Show (Bezier v) where
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier v where
     evalSpline   (Bezier _ cs) = head . last . deCasteljau cs
-    splineDegree (Bezier p _) = p
-    knotVector   (Bezier p _) = mappend 
+    splineDegree (Bezier p  _) = p
+    knotVector   (Bezier p  _) = mappend 
         (knotWithMultiplicity 0 (p+1))
         (knotWithMultiplicity 1 (p+1))
     toBSpline = liftA2 bSpline knotVector controlPoints
 
 instance Spline Bezier v => ControlPoints Bezier v where
     mapControlPoints f (Bezier n cs) = Bezier n (map f cs)
-    controlPoints (Bezier _ cs) = cs
+    controlPoints      (Bezier _ cs) = cs
 
 deCasteljau [] t = []
 deCasteljau ps t = ps : deCasteljau (zipWith (interp t) ps (tail ps)) t
