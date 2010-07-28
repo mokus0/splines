@@ -17,7 +17,9 @@ import Data.VectorSpace
 
 -- |The I-Spline basis functions are the integrals of the M-splines, or
 -- alternatively the integrals of the B-splines normalized to the range
--- [0,1].  Every I-spline basis function increases monotonically from 0 to 1.
+-- [0,1].  Every I-spline basis function increases monotonically from 0 to 1,
+-- thus it is useful as a basis for monotone functions.  An I-Spline curve
+-- is monotone if and only if every non-zero control point has the same sign.
 data ISpline v = ISpline
     { iSplineDegree        :: !Int
     , iSplineKnotVector    :: Knots (Scalar v)
