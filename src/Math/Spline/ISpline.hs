@@ -40,12 +40,9 @@ instance (Show (Scalar v), Show v) => Show (ISpline v) where
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
 iSpline :: Knots (Scalar a) -> [a] -> ISpline a
-iSpline kts cps = fromMaybe (error "iSpline: too few knots") (maybeSpline kts cps)
-
-maybeSpline :: Knots (Scalar a) -> [a] -> Maybe (ISpline a)
-maybeSpline kts cps 
-    | n > m     = Nothing
-    | otherwise = Just (ISpline (m - n) kts cps)
+iSpline kts cps 
+    | n > m     = error "iSpline: too few knots"
+    | otherwise = ISpline (m - n) kts cps
     where
         n = length cps
         m = numKnots kts - 1
