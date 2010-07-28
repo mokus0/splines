@@ -1,25 +1,25 @@
-{-# LANGUAGE MultiParamTypeClasses, StandaloneDeriving, FlexibleContexts, UndecidableInstances, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses, StandaloneDeriving, FlexibleContexts, UndecidableInstances, TypeFamilies, ParallelListComp #-}
 module Math.Spline.BSpline
     ( BSpline
     , bSpline
     , splitBSpline
-    , derivBSpline
+    , derivBSpline, integrateBSpline
     ) where
 
 import Math.Spline.Knots
 import Math.Spline.BSpline.Internal
 
 import Data.Foldable (Foldable(foldMap))
-import Data.List (zipWith4)
+import Data.List (zipWith4, inits)
 import Data.Maybe (fromMaybe)
-import Data.VectorSpace (VectorSpace(..), Scalar, (^-^), lerp)
+import Data.VectorSpace
 
 -- |@bSpline kts cps@ creates a B-spline with the given knot vector and control 
 -- points.  The degree is automatically inferred as the difference between the 
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
 bSpline :: Knots (Scalar a) -> [a] -> BSpline a
-bSpline kts cps = fromMaybe (error "bSpline: too many control points") (maybeSpline kts cps)
+bSpline kts cps = fromMaybe (error "bSpline: too few knots") (maybeSpline kts cps)
 
 maybeSpline :: Knots (Scalar a) -> [a] -> Maybe (BSpline a)
 maybeSpline kts cps 
@@ -40,15 +40,30 @@ instance (Show (Scalar v), Show v) => Show (BSpline v) where
         )
 
 derivBSpline
-  :: (VectorSpace v, Fractional (Scalar v)) => BSpline v -> BSpline v
-derivBSpline spline = spline {controlPoints = ds'}
+  :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
+derivBSpline spline
+    | numKnots ks  < 2  = spline
+    | numKnots ks == 2  = bSpline ks [zeroV]
+    | otherwise         = bSpline ks' ds'
     where
+        ks' = knotsFromList . init . tail $ ts
         ds' = zipWith (*^) (tail cs) (zipWith (^-^) (tail ds) ds)
         
-        p  = degree spline
-        us = knots (knotVector spline)
+        ks = knotVector spline; ts = knots ks
         ds = controlPoints spline
-        cs = [fromIntegral p / (u0 - u1) | (u0, u1) <- spans p us]
+        
+        p  = degree spline
+        cs = [fromIntegral p / (t1 - t0) | (t0,t1) <- spans p ts]
+
+integrateBSpline
+  :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
+integrateBSpline spline = bSpline (knotsFromList ts') (scanl (^+^) zeroV ds')
+    where
+        ds' = zipWith (*^) cs (controlPoints spline)
+        ts = knots (knotVector spline)
+        ts' = head ts : ts ++ [last ts]
+        p = degree spline + 1
+        cs = [(t1 - t0) / fromIntegral p | (t0,t1) <- spans p ts]
 
 spans n xs = zip xs (drop n xs)
 
