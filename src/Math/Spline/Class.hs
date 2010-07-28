@@ -29,7 +29,6 @@ class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     toBSpline :: s v -> BSpline.BSpline v
 
 class Spline s v => ControlPoints s v where
-    mapControlPoints :: (v -> v) -> s v -> s v
     controlPoints :: s v -> [v]
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BSpline.BSpline v where
@@ -39,5 +38,4 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BSplin
     toBSpline = id
 
 instance Spline BSpline.BSpline v => ControlPoints BSpline.BSpline v where
-    mapControlPoints = BSpline.mapControlPoints
     controlPoints = BSpline.controlPoints

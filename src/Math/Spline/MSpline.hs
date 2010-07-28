@@ -60,7 +60,6 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSplin
                   ]
 
 instance Spline MSpline v => ControlPoints MSpline v where
-    mapControlPoints f (MSpline n ks cs) = MSpline n ks (map f cs)
     controlPoints      (MSpline _  _ cs) = cs
 
 toMSpline :: Spline s v => s v -> MSpline v

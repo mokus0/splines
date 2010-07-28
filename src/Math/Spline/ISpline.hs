@@ -55,5 +55,4 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline ISplin
         where cs = iSplineControlPoints spline
 
 instance Spline ISpline v => ControlPoints ISpline v where
-    mapControlPoints f (ISpline n ks cs) = ISpline n ks (map f cs)
     controlPoints      (ISpline _  _ cs) = cs
