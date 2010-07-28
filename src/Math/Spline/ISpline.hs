@@ -5,14 +5,13 @@
         StandaloneDeriving
   #-}
 module Math.Spline.ISpline
-    ( ISpline, iSpline
+    ( ISpline, iSpline, toISpline
     ) where
 
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
 
-import Data.Maybe (fromMaybe)
 import Data.VectorSpace
 
 -- |The I-Spline basis functions are the integrals of the M-splines, or
@@ -58,3 +57,17 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline ISplin
 
 instance Spline ISpline v => ControlPoints ISpline v where
     controlPoints      (ISpline _  _ cs) = cs
+
+toISpline :: (Spline s v, Eq v) => s v -> ISpline v
+toISpline = fromBSpline . toBSpline
+
+fromBSpline spline
+    | head ds == zeroV 
+    && numKnots ks >= 2 = iSpline (knotsFromList (init (tail ts))) (tail ds')
+    | otherwise         = iSpline (knotsFromList (init       ts )) ds'
+    where
+        ks = knotVector spline
+        ts = knots ks
+        ds = controlPoints spline
+        
+        ds' = zipWith (^-^) ds (zeroV:ds)
