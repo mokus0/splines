@@ -5,7 +5,7 @@
         StandaloneDeriving
   #-}
 module Math.Spline.MSpline
-    ( MSpline, mSpline
+    ( MSpline, mSpline, toMSpline
     ) where
 
 import Math.Spline.BSpline
@@ -65,3 +65,15 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSplin
 instance Spline MSpline v => ControlPoints MSpline v where
     mapControlPoints f (MSpline n ks cs) = MSpline n ks (map f cs)
     controlPoints      (MSpline _  _ cs) = cs
+
+toMSpline :: Spline s v => s v -> MSpline v
+toMSpline = fromBSpline . toBSpline
+
+fromBSpline spline = mSpline ks cs
+    where
+        n = splineDegree spline + 1; n' = fromIntegral n
+        ks = knotVector spline
+        cs =  [ ((t1 - t0) / n') *^ c
+              | c <- controlPoints spline
+              | (t0, t1) <- spans n (knots ks)
+              ]
