@@ -15,6 +15,8 @@ import Math.Spline.Knots
 import Data.Maybe (fromMaybe)
 import Data.VectorSpace
 
+-- |M-Splines are B-splines normalized so that the integral of each basis 
+-- function over the spline domain is 1.
 data MSpline v = MSpline
     { mSplineDegree        :: !Int
     , mSplineKnotVector    :: Knots (Scalar v)
@@ -50,10 +52,11 @@ maybeSpline kts cps
 spans n xs = zip xs (drop n xs)
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSpline v where
+    splineDegree = mSplineDegree
+    knotVector   = mSplineKnotVector
     toBSpline (MSpline p ks cs) = bSpline ks cs'
         where
-            n   = p + 1
-            n'  = fromIntegral n
+            n = p + 1; n' = fromIntegral n
             cs' = [ (n' / (t1 - t0)) *^ c 
                   | c <- cs
                   | (t0, t1) <- spans n (knots ks)
