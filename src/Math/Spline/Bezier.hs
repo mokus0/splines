@@ -9,7 +9,6 @@ import Math.Spline.Knots
 
 import Control.Applicative
 import Data.VectorSpace
-import Data.Monoid
 
 data Bezier v = Bezier !Int [v] deriving (Eq, Ord)
 

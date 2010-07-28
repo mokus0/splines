@@ -9,8 +9,6 @@ module Math.Spline.BSpline
 import Math.Spline.Knots
 import Math.Spline.BSpline.Internal
 
-import Data.Foldable (Foldable(foldMap))
-import Data.List (zipWith4, inits)
 import Data.Maybe (fromMaybe)
 import Data.VectorSpace
 

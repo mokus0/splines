@@ -12,7 +12,6 @@ import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
 
-import Data.Maybe (fromMaybe)
 import Data.VectorSpace
 
 -- |M-Splines are B-splines normalized so that the integral of each basis 
@@ -60,7 +59,7 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSplin
                   ]
 
 instance Spline MSpline v => ControlPoints MSpline v where
-    controlPoints      (MSpline _  _ cs) = cs
+    controlPoints = mSplineControlPoints
 
 toMSpline :: Spline s v => s v -> MSpline v
 toMSpline = fromBSpline . toBSpline
