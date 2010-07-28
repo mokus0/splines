@@ -9,7 +9,6 @@ module Math.Spline.ISpline
     ) where
 
 import Math.Spline.BSpline
-import Math.Spline.MSpline
 import Math.Spline.Class
 import Math.Spline.Knots
 
@@ -52,7 +51,11 @@ maybeSpline kts cps
         m = numKnots kts - 1
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline ISpline v where
-    toBSpline (ISpline p ks cs) = integrateBSpline (toBSpline (mSpline ks cs))
+    splineDegree = (1 +) . iSplineDegree
+    knotVector spline = knotsFromList (head ts : ts ++ [last ts])
+        where ts = knots (iSplineKnotVector spline)
+    toBSpline spline = bSpline (knotVector spline) (scanl (^+^) zeroV cs)
+        where cs = iSplineControlPoints spline
 
 instance Spline ISpline v => ControlPoints ISpline v where
     mapControlPoints f (ISpline n ks cs) = ISpline n ks (map f cs)
