@@ -14,12 +14,12 @@ import Data.List (zipWith4)
 import Data.Maybe (fromMaybe)
 import Data.VectorSpace (VectorSpace(..), Scalar, (^-^), lerp)
 
--- |@spline kts cps@ creates a B-spline with the given knot vector and control 
+-- |@bSpline kts cps@ creates a B-spline with the given knot vector and control 
 -- points.  The degree is automatically inferred as the difference between the 
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
 bSpline :: Knots (Scalar a) -> [a] -> BSpline a
-bSpline kts cps = fromMaybe (error "spline: too many control points") (maybeSpline kts cps)
+bSpline kts cps = fromMaybe (error "bSpline: too many control points") (maybeSpline kts cps)
 
 maybeSpline :: Knots (Scalar a) -> [a] -> Maybe (BSpline a)
 maybeSpline kts cps 
@@ -33,7 +33,7 @@ deriving instance (Eq   (Scalar v), Eq   v) => Eq   (BSpline v)
 deriving instance (Ord  (Scalar v), Ord  v) => Ord  (BSpline v)
 instance (Show (Scalar v), Show v) => Show (BSpline v) where
     showsPrec p (Spline _ kts cps) = showParen (p>10) 
-        ( showString "spline "
+        ( showString "bSpline "
         . showsPrec 11 kts
         . showChar ' '
         . showsPrec 11 cps
