@@ -1,8 +1,10 @@
-module Math.Spline.BSpline.Internal where
+module Math.Spline.BSpline.Internal
+    (BSpline(..), mapControlPoints, evalBSpline, insert, deBoor) where
 
 import Math.Spline.Knots
 
 import Data.List (zipWith4)
+import Data.Monoid
 import Data.VectorSpace
 
 data BSpline v = Spline
@@ -17,6 +19,24 @@ mapControlPoints f spline = spline
     }
 
 evalBSpline spline = head . last . deBoor spline
+
+-- insert one knot
+insert spline x = spline
+    { knotVector    = knotVector spline `mappend` knot x
+    , controlPoints = zipWith4 (interp x) us (drop p us) ds (tail ds)
+    }
+    where
+        us = knots (knotVector spline)
+        p  = degree spline
+        ds = extend (controlPoints spline)
+
+
+-- duplicate the endpoints of a list; for example,
+-- extend [1..5] -> [1,1,2,3,4,5,5]
+extend []       = []
+extend (x:xs)   = x : extend' x xs
+    where   extend' x []      = [x,x]
+            extend' x (x':xs) = x:   extend' x' xs
 
 deBoor spline x = go us (controlPoints spline)
     where
@@ -36,11 +56,11 @@ deBoor spline x = go us (controlPoints spline)
             where
                 ds' = zipWith4 (interp x) uLo uHi
                                           ds (tail ds)
-        
-        interp x x0 x1 y0 y1
-            |  x <  x0  = y0
-            |  x >= x1  = y1
-            | otherwise = lerp y0 y1 a
-            where
-                a = (x - x0) / (x1 - x0)
+
+interp x x0 x1 y0 y1
+    |  x <  x0  = y0
+    |  x >= x1  = y1
+    | otherwise = lerp y0 y1 a
+    where
+        a = (x - x0) / (x1 - x0)
 
