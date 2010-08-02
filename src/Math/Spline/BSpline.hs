@@ -2,6 +2,7 @@
 module Math.Spline.BSpline
     ( BSpline
     , bSpline
+    , insertKnot
     , splitBSpline
     , derivBSpline, integrateBSpline
     ) where
@@ -17,6 +18,7 @@ import Data.VectorSpace
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
 bSpline :: Knots (Scalar a) -> [a] -> BSpline a
+bSpline   _  [] = error "bSpline: no control points"
 bSpline kts cps = fromMaybe (error "bSpline: too few knots") (maybeSpline kts cps)
 
 maybeSpline :: Knots (Scalar a) -> [a] -> Maybe (BSpline a)

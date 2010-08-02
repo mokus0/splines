@@ -28,7 +28,7 @@ instance Show a => Show (Knots a) where
         . showsPrec 11 (knots ks)
         )
 
-instance (Num a, Ord a) => Monoid (Knots a) where
+instance (Ord a) => Monoid (Knots a) where
     mempty = Knots 0 M.empty
     mappend (Knots n1 v1) (Knots n2 v2) =
         Knots (n1 + n2) (M.filter (/=0) (M.unionWith (+) v1 v2))
@@ -89,7 +89,9 @@ totalMultiplicity kts = numKnots kts - numDistinctKnots kts
 -- |@knotDomain kts p@ return the domain of a B-spline or NURBS with knot
 -- vector @kts@ and degree @p@.  This is the subrange spanned by all
 -- except the first and last @p@ knots.  Outside this domain, the spline
--- does not have a complete basis set.
+-- does not have a complete basis set.  De Boor's algorithm assumes that
+-- the basis functions sum to 1, which is only true on this range, and so
+-- this is also precisely the domain on which de Boor's algorithm is valid.
 knotDomain :: Knots a -> Int -> Maybe (a,a)
 knotDomain ks@(Knots n _) p 
     | n > 2*p   = Just (head (drop p kts), head (drop p (reverse kts)))

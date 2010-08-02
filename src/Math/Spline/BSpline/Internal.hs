@@ -1,5 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Math.Spline.BSpline.Internal
-    (BSpline(..), mapControlPoints, evalBSpline, insert, deBoor) where
+    (BSpline(..), mapControlPoints, evalBSpline, insertKnot, deBoor) where
 
 import Math.Spline.Knots
 
@@ -20,8 +21,11 @@ mapControlPoints f spline = spline
 
 evalBSpline spline = head . last . deBoor spline
 
--- insert one knot
-insert spline x = spline
+-- |Insert one knot into a 'BSpline'
+insertKnot
+  :: (VectorSpace a, Ord (Scalar a), Fractional (Scalar a)) =>
+     BSpline a -> Scalar a -> BSpline a
+insertKnot spline x = spline
     { knotVector    = knotVector spline `mappend` knot x
     , controlPoints = zipWith4 (interp x) us (drop p us) ds (tail ds)
     }
