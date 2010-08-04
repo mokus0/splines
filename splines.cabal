@@ -1,23 +1,26 @@
 name:                   splines
-version:                0.0.0.1
-stability:              experimental
+version:                0.1
+stability:              provisional
 
-cabal-version:          >= 1.2
+cabal-version:          >= 1.6
 build-type:             Simple
 
 author:                 James Cook <mokus@deepbondi.net>
 maintainer:             James Cook <mokus@deepbondi.net>
-license:                Unspecified
-homepage:               http://code.haskell.org/~mokus/splines/
+license:                PublicDomain
 
-category:               Math, Graphics
-synopsis:               Very rough sketch of a spline library.
-description:            This is a very simple implementation of a 
-                        general-purpose splines library, just to get the code
-                        out there.  Its interface is very unstable and will 
-                        very likely change as new needs or better style ideas 
-                        come up.  Contributions, suggestions and/or feature 
-                        requests are welcome.
+category:               Graphics, Numerical, Math
+synopsis:               B-Splines, other splines, and NURBS.
+description:            This is a fairly simple implementation of a 
+                        general-purpose spline library, just to get the code
+                        out there.  Its interface is still mildly unstable and
+                        may change (hopefully not drastically) as new needs or
+                        better style ideas come up.  Patches, suggestions
+                        and/or feature requests are welcome.
+
+source-repository head
+    type: darcs
+    location: http://code.haskell.org/~mokus/splines/
 
 Library
   hs-source-dirs:       src
