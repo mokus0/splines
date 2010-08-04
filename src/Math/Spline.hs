@@ -3,7 +3,7 @@ module Math.Spline
     
     , Knots, mkKnots, knots
     
-    , Bezier, bezier
+    , BezierCurve, bezierCurve
     , BSpline, bSpline
     , MSpline, mSpline, toMSpline
     , ISpline, iSpline, toISpline
@@ -11,7 +11,7 @@ module Math.Spline
 
 import Math.Spline.Class
 import Math.Spline.Knots
-import Math.Spline.Bezier
+import Math.Spline.BezierCurve
 import Math.Spline.BSpline
 import Math.Spline.MSpline
 import Math.Spline.ISpline

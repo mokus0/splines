@@ -22,7 +22,7 @@ description:            This is a very simple implementation of a
 Library
   hs-source-dirs:       src
   exposed-modules:      Math.Spline
-                        Math.Spline.Bezier
+                        Math.Spline.BezierCurve
                         Math.Spline.BSpline
                         Math.Spline.Class
                         Math.Spline.ISpline
