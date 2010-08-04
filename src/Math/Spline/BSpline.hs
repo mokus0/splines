@@ -2,6 +2,7 @@
 module Math.Spline.BSpline
     ( BSpline
     , bSpline
+    , evalBSpline
     , insertKnot
     , splitBSpline
     , derivBSpline, integrateBSpline
