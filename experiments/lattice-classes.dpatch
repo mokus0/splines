@@ -1,0 +1,183 @@
+Wed Aug  4 13:14:24 EDT 2010  James Cook <mokus@deepbondi.net>
+  * Added implementation of Algebra.Lattice classes for Knots
+
+New patches:
+
+[Added implementation of Algebra.Lattice classes for Knots
+James Cook <mokus@deepbondi.net>**20100804171424
+ Ignore-this: 7d9a15155c1674b9e162372f10ba0838
+] hunk ./splines.cabal 36
+                         Math.Spline.MSpline
+                         Math.NURBS
+   other-modules:        Math.Spline.BSpline.Internal
+-  build-depends:        base >= 3 && < 5, containers, vector-space
++  build-depends:        base >= 3 && < 5, containers, lattices, vector-space
+hunk ./src/Math/Spline/Knots.hs 15
+     ) where
+ 
+ import Prelude hiding (sum)
++import Algebra.Lattice
+ import Data.Foldable (Foldable(foldMap), sum)
+ import qualified Data.Map as M
+ import Data.Monoid (Monoid(..))
+hunk ./src/Math/Spline/Knots.hs 39
+     mappend (Knots n1 v1) (Knots n2 v2) =
+         Knots (n1 + n2) (M.filter (/=0) (M.unionWith (+) v1 v2))
+ 
++instance Ord a => JoinSemiLattice (Knots a) where
++    join (Knots _ v1) (Knots _ v2) = Knots (sum v) v
++        where v = M.unionWith max v1 v2
++
++instance Ord a => MeetSemiLattice (Knots a) where
++    meet (Knots _ v1) (Knots _ v2) = Knots (sum v) v
++        where v = M.unionWith min v1 v2
++
++instance Ord a => Lattice (Knots a)
++
++instance Ord a => BoundedJoinSemiLattice (Knots a) where
++    bottom = mempty
++
+ instance Foldable Knots where
+     foldMap f = foldMap f . knots
+ 
+
+Context:
+
+[Polishing cabal file for upload to hackage, bumped version to 0.1
+James Cook <james.cook@usma.edu>**20100804164757
+ Ignore-this: 3b2ea3bc820958b7cc6dc8bbd2bce44
+] 
+[renamed derivBSpline to differentiateBSpline, for consistency with integrateBSpline
+James Cook <james.cook@usma.edu>**20100804164329
+ Ignore-this: 4523fdab11875f6d27ce1427279f1f52
+] 
+[renamed Bezier to BezierCurve, so the Bezier name will be available if anyone decides to implement full Bezier splines
+James Cook <james.cook@usma.edu>**20100804164029
+ Ignore-this: b4a9102a15d718312b9076186f4d12c8
+] 
+[added evalBSpline to export list of BSpline.hs
+James Cook <james.cook@usma.edu>**20100804163713
+ Ignore-this: 18c91b496c5c2114387b2e4bb10eb9c1
+] 
+[Added evalSpline to export list of Bezier.hs, MSpline.hs, and ISpline.hs
+James Cook <james.cook@usma.edu>**20100804163630
+ Ignore-this: 486f4afd7dce56b707206b0d7d8ff137
+] 
+[Polishing haddock docs and export lists for release
+James Cook <james.cook@usma.edu>**20100804161214
+ Ignore-this: 199f7f68bf6038bdc4fea1f5ed5ebb46
+] 
+[touching up haddock comments in Class.hs
+James Cook <mokus@deepbondi.net>**20100804154546
+ Ignore-this: a4e9725b5b34ed5e9e62ac027bbe186
+] 
+[minor style change; liftA2 -> f <$> x <*> y
+James Cook <mokus@deepbondi.net>**20100804154109
+ Ignore-this: 7fa4875d6518b49da405044e8a41fb3
+] 
+[added type sig for deCasteljau
+James Cook <mokus@deepbondi.net>**20100804153917
+ Ignore-this: 677bb58a3e9525c6f57d5909592a043e
+] 
+[removed pointless spacing (was there for alignment with a no-longer-existent function)
+James Cook <mokus@deepbondi.net>**20100804153805
+ Ignore-this: 33b34cbb8fd26c75d060e941b1ab2f2
+] 
+[re-derived recursive version of deCasteljau from list-comprehension version
+James Cook <mokus@deepbondi.net>**20100804153631
+ Ignore-this: 35043349b093d7dc68572e44214353a7
+] 
+[Added insertKnot function to public interface and improved a few haddock docs
+James Cook <mokus@deepbondi.net>**20100802150858
+ Ignore-this: 7f86553f388d7bbc893e859eb5c1fbfd
+] 
+[Added a function to insert a knot into a b-spline
+James Cook <mokus@deepbondi.net>**20100802144424
+ Ignore-this: a5cf3887d64ab8c54f3fea6bfa8a5363
+] 
+[Removed unused imports and made use of an unused field projection function
+James Cook <mokus@deepbondi.net>**20100728201443
+ Ignore-this: e747dde7ddfeb91d6da778db54b68d4d
+] 
+[Implemented toISpline function
+James Cook <mokus@deepbondi.net>**20100728201013
+ Ignore-this: a01ee72e02d31e501cd53c83a437745e
+] 
+[Extended the ISpline comment to explain stronger results about monotonicity
+James Cook <mokus@deepbondi.net>**20100728174015
+ Ignore-this: 52df02d7dd6958c7969eda62f6a2b585
+] 
+[Removed mapControlPoints from ControlPoints class, it is never used.  It was part of an idea for generalizing NURBS, but I don't think the idea was sound anyway
+James Cook <mokus@deepbondi.net>**20100728170658
+ Ignore-this: 37e98ff7dffa323ae6d06288eb675a27
+] 
+[Added remark about monotonicity in ISpline documentation
+James Cook <mokus@deepbondi.net>**20100728165940
+ Ignore-this: e93c0b125a5f96b8e80991880db7b598
+] 
+[Simplified mSpline constructor
+James Cook <mokus@deepbondi.net>**20100728165926
+ Ignore-this: edbea2a29439fa64ea423ee774b04f4f
+] 
+[simplified iSpline constructor
+James Cook <mokus@deepbondi.net>**20100728165847
+ Ignore-this: 55d136146b757c5dffe3c0c46357e2c0
+] 
+[Added "toMSpline" function
+James Cook <mokus@deepbondi.net>**20100728165457
+ Ignore-this: 2a0babf5b2a39d4a39139dd889b801f7
+] 
+[Updated I-Splines to compute B-Splines directly (rather than integrating M-Splines)
+James Cook <mokus@deepbondi.net>**20100728165001
+ Ignore-this: 78c469948e91938991de642b273ba976
+] 
+[Minor cleanup in MSpline.hs
+James Cook <mokus@deepbondi.net>**20100728163058
+ Ignore-this: 79d58707a334245acfbe4bcca8b354b9
+] 
+[Added I-Splines
+James Cook <mokus@deepbondi.net>**20100728163052
+ Ignore-this: c1bfbce7a120d29099f7e4e342105f66
+] 
+[b-spline integral and derivative implemented and seems to be working.  Needs code cleanup at some point though, it's pretty ugly.
+James Cook <mokus@deepbondi.net>**20100728161947
+ Ignore-this: a0a2fe3c60bc97c2d271c0a392c9faff
+] 
+[Added M-Splines and fixed some missed changes in the b-spline module
+James Cook <mokus@deepbondi.net>**20100728144424
+ Ignore-this: 7fcfa7b99eab9e5d859a9c0c4b074a10
+] 
+[Fixed stupid error in last patch
+James Cook <mokus@deepbondi.net>**20100727173022
+ Ignore-this: 792694a3adc9d9a815f6ddae317f3a52
+] 
+[made splineDomain a constant function for Bezier
+James Cook <mokus@deepbondi.net>**20100727172958
+ Ignore-this: 7ecb5d261693ebd44b668414de3abc61
+] 
+[simplified knotVector implementation for Bezier
+James Cook <mokus@deepbondi.net>**20100727172555
+ Ignore-this: 84862824a9a5f5afdd9b4aaea21ab2d0
+] 
+[renamed some variables in deCasteljau for consistency with usage in th e rest of the module
+James Cook <mokus@deepbondi.net>**20100727165140
+ Ignore-this: a35a4a42a0611586e7d8f8be3cc25e32
+] 
+[minor layout changes
+James Cook <mokus@deepbondi.net>**20100727164907
+ Ignore-this: 40d95ea86aab1907176b216b12795317
+] 
+[put darcs repo URL in cabal file
+James Cook <mokus@deepbondi.net>**20100727163010
+ Ignore-this: c85107e5545e530eeeb6af46dd2f4c60
+] 
+[Initial import
+James Cook <mokus@deepbondi.net>**20100727162844
+ Ignore-this: 50b582ab5041640e1408092f21ccfadd
+] 
+[initializing repository
+cabalTemplate script**20100727145235
+ Ignore-this: 18f31d5be30712cf010076a29bee6815
+] 
+Patch bundle hash:
+ffe8704dd0c01adf3e24f3c9221c8b9c1a7bb89f
