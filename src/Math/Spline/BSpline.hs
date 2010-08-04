@@ -5,7 +5,7 @@ module Math.Spline.BSpline
     , evalBSpline
     , insertKnot
     , splitBSpline
-    , derivBSpline, integrateBSpline
+    , differentiateBSpline, integrateBSpline
     ) where
 
 import Math.Spline.Knots
@@ -40,9 +40,9 @@ instance (Show (Scalar v), Show v) => Show (BSpline v) where
         . showsPrec 11 cps
         )
 
-derivBSpline
+differentiateBSpline
   :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
-derivBSpline spline
+differentiateBSpline spline
     | numKnots ks  < 2  = spline
     | numKnots ks == 2  = bSpline ks [zeroV]
     | otherwise         = bSpline ks' ds'
