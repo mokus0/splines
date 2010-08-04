@@ -34,9 +34,9 @@ instance Spline Bezier v => ControlPoints Bezier v where
     controlPoints      (Bezier _ cs) = cs
 
 deCasteljau [] t = []
-deCasteljau cs t = cs : deCasteljau (zipWith (interp t) cs (tail cs)) t
+deCasteljau cs t = cs : deCasteljau (zipWith interp cs (tail cs)) t
     where
-        interp a x0 x1 = lerp x0 x1 a
+        interp x0 x1 = lerp x0 x1 t
 
 splitBezier :: VectorSpace v => Bezier v -> Scalar v -> (Bezier v, Bezier v)
 splitBezier (Bezier n cs) t = 
