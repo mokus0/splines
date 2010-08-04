@@ -7,13 +7,16 @@ import qualified Math.Spline.BSpline.Internal as BSpline
 
 import Data.VectorSpace
 
--- |A spline is a piecewise polynomial vector-valued function.  Minimum instance
--- definition is @toBSpline@.
+-- |A spline is a piecewise polynomial vector-valued function.  The necessary
+-- and sufficient instance definition is 'toBSpline'.
 class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     -- |Returns the domain of a spline.  In the case of B-splines, this is
     -- the domain on which a spline with this degree and knot vector has a 
     -- full basis set.  In other cases, it should be no larger than 
-    -- @splineDomain . toBSpline@, but may be smaller.
+    -- @splineDomain . toBSpline@, but may be smaller.  Within this domain,
+    -- 'evalSpline' should agree with @'evalSpline' . 'toBSpline'@ (not 
+    -- necessarily exactly, but up to reasonable expectations of numerical 
+    -- accuracy).
     splineDomain :: s v -> Maybe (Scalar v, Scalar v)
     splineDomain = knotDomain <$> knotVector <*> splineDegree
     
