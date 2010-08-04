@@ -1,11 +1,13 @@
 module Math.Spline.Knots
     ( Knots
-    , knot, knotWithMultiplicity
-    , knotsFromList, knotsFromListWithMultiplicity
-    , numKnots, numDistinctKnots
-    , knots, distinctKnots
+    , knot, multipleKnot
+    , mkKnots, fromList
+    
+    , knots, numKnots
+    , toList, distinctKnots, numDistinctKnots
+    
     , knotMultiplicity, setKnotMultiplicity
-    , totalMultiplicity
+    
     , knotDomain
     ) where
 
@@ -24,7 +26,7 @@ instance Show a => Show (Knots a) where
         . showsPrec 11 (head $ knots ks)
         )
     showsPrec p ks = showParen (p > 10)
-        ( showString "knotsFromList "
+        ( showString "mkKnots "
         . showsPrec 11 (knots ks)
         )
 
@@ -39,22 +41,28 @@ instance Foldable Knots where
 
 -- |Create a knot vector consisting of one knot.
 knot :: Ord a => a -> Knots a
-knot x = knotWithMultiplicity x 1
+knot x = multipleKnot x 1
 
 -- |Create a knot vector consisting of one knot with the specified multiplicity.
-knotWithMultiplicity :: Ord a => a -> Int -> Knots a
-knotWithMultiplicity k n 
+multipleKnot :: Ord a => a -> Int -> Knots a
+multipleKnot k n 
     | n <= 0    = Knots 0 (M.empty)
     | otherwise = Knots n (M.singleton k n)
 
 -- |Create a knot vector consisting of all the knots in a list.
-knotsFromList :: (Ord a) => [a] -> Knots a
-knotsFromList ks = knotsFromListWithMultiplicity (map (\k -> (k,1)) ks)
+mkKnots :: (Ord a) => [a] -> Knots a
+mkKnots ks = fromList (map (\k -> (k,1)) ks)
 
--- |Create a knot vector consisting of all the knots in a list.
-knotsFromListWithMultiplicity :: (Ord k) => [(k, Int)] -> Knots k
-knotsFromListWithMultiplicity ks = Knots (sum kMap) kMap
+-- |Create a knot vector consisting of all the knots and corresponding 
+-- multiplicities in a list.
+fromList :: (Ord k) => [(k, Int)] -> Knots k
+fromList ks = Knots (sum kMap) kMap
     where kMap = M.fromListWith (+) (filter ((>0).snd) ks)
+
+-- |Returns a list of all distinct knots in ascending order along with
+-- their multiplicities.
+toList :: Knots k -> [(k, Int)]
+toList (Knots _ ks) = M.toList ks
 
 -- |Returns the number of knots (not necessarily distinct) in a knot vector.
 numKnots :: Knots t -> Int
@@ -76,15 +84,14 @@ distinctKnots (Knots _ ks) = M.keys ks
 knotMultiplicity :: (Ord k) => k -> Knots k -> Int
 knotMultiplicity k (Knots _ ks) = fromMaybe 0 (M.lookup k ks)
 
+-- |Returns a new knot vector with the given knot set to the specified 
+-- multiplicity and all other knots unchanged.
 setKnotMultiplicity :: Ord k => k -> Int -> Knots k -> Knots k
 setKnotMultiplicity k n (Knots m ks)
     | n <= 0    = Knots (m     - n') (M.delete k ks)
     | otherwise = Knots (m + n - n') (M.insert k n ks)
     where
         n' = knotMultiplicity k (Knots m ks)
-
-totalMultiplicity :: Knots a -> Int
-totalMultiplicity kts = numKnots kts - numDistinctKnots kts
 
 -- |@knotDomain kts p@ return the domain of a B-spline or NURBS with knot
 -- vector @kts@ and degree @p@.  This is the subrange spanned by all

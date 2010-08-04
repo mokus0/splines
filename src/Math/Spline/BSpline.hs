@@ -46,7 +46,7 @@ derivBSpline spline
     | numKnots ks == 2  = bSpline ks [zeroV]
     | otherwise         = bSpline ks' ds'
     where
-        ks' = knotsFromList . init . tail $ ts
+        ks' = mkKnots . init . tail $ ts
         ds' = zipWith (*^) (tail cs) (zipWith (^-^) (tail ds) ds)
         
         ks = knotVector spline; ts = knots ks
@@ -57,7 +57,7 @@ derivBSpline spline
 
 integrateBSpline
   :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
-integrateBSpline spline = bSpline (knotsFromList ts') (scanl (^+^) zeroV ds')
+integrateBSpline spline = bSpline (mkKnots ts') (scanl (^+^) zeroV ds')
     where
         ds' = zipWith (*^) cs (controlPoints spline)
         ts = knots (knotVector spline)
@@ -71,7 +71,7 @@ splitBSpline
   :: (VectorSpace v, Ord (Scalar v), Fractional (Scalar v)) =>
      BSpline v -> Scalar v -> Maybe (BSpline v, BSpline v)
 splitBSpline spline@(Spline p kv ds) t 
-    | inDomain  = Just (Spline p (knotsFromList us0) ds0, Spline p (knotsFromList us1) ds1)
+    | inDomain  = Just (Spline p (mkKnots us0) ds0, Spline p (mkKnots us1) ds1)
     | otherwise = Nothing
     where
         inDomain = case knotDomain kv p of

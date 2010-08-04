@@ -1,5 +1,5 @@
 {-# LANGUAGE StandaloneDeriving, FlexibleContexts, UndecidableInstances, TypeFamilies #-}
-module Math.Spline.NURBS
+module Math.NURBS
     ( NURBS
     , nurbs, toNURBS
     , evalNURBS, nurbsDomain

@@ -50,7 +50,7 @@ iSpline kts cps
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline ISpline v where
     splineDegree = (1 +) . iSplineDegree
-    knotVector spline = knotsFromList (head ts : ts ++ [last ts])
+    knotVector spline = mkKnots (head ts : ts ++ [last ts])
         where ts = knots (iSplineKnotVector spline)
     toBSpline spline = bSpline (knotVector spline) (scanl (^+^) zeroV cs)
         where cs = iSplineControlPoints spline
@@ -63,8 +63,8 @@ toISpline = fromBSpline . toBSpline
 
 fromBSpline spline
     | head ds == zeroV 
-    && numKnots ks >= 2 = iSpline (knotsFromList (init (tail ts))) (tail ds')
-    | otherwise         = iSpline (knotsFromList (init       ts )) ds'
+    && numKnots ks >= 2 = iSpline (mkKnots (init (tail ts))) (tail ds')
+    | otherwise         = iSpline (mkKnots (init       ts )) ds'
     where
         ks = knotVector spline
         ts = knots ks

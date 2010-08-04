@@ -28,6 +28,6 @@ Library
                         Math.Spline.ISpline
                         Math.Spline.Knots
                         Math.Spline.MSpline
-                        Math.Spline.NURBS
+                        Math.NURBS
   other-modules:        Math.Spline.BSpline.Internal
   build-depends:        base >= 3 && < 5, containers, vector-space
