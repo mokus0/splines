@@ -28,7 +28,7 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier
     evalSpline   (Bezier _ cs) = head . last . deCasteljau cs
     splineDegree (Bezier p  _) = p
     knotVector   (Bezier p  _) = knotsFromListWithMultiplicity [(0, p+1), (1, p+1)]
-    toBSpline = liftA2 bSpline knotVector controlPoints
+    toBSpline = bSpline <$> knotVector <*> controlPoints
 
 instance Spline Bezier v => ControlPoints Bezier v where
     controlPoints (Bezier _ cs) = cs

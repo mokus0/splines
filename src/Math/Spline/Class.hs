@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
 module Math.Spline.Class where
 
-import Control.Applicative (liftA2)
+import Control.Applicative
 import Math.Spline.Knots
 import qualified Math.Spline.BSpline.Internal as BSpline
 
@@ -15,7 +15,7 @@ class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     -- full basis set.  In other cases, it should be no larger than 
     -- @splineDomain . toBSpline@, but may be smaller.
     splineDomain :: s v -> Maybe (Scalar v, Scalar v)
-    splineDomain = liftA2 knotDomain knotVector splineDegree
+    splineDomain = knotDomain <$> knotVector <*> splineDegree
     
     evalSpline :: s v -> Scalar v -> v
     evalSpline = evalSpline . toBSpline
