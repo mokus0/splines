@@ -6,6 +6,7 @@
   #-}
 module Math.Spline.MSpline
     ( MSpline, mSpline, toMSpline
+    , evalSpline
     ) where
 
 import Math.Spline.BSpline

@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, UndecidableInstances #-}
 module Math.Spline.Bezier
     ( Bezier, bezier, splitBezier
+    , evalSpline
     ) where
 
 import Math.Spline.BSpline
