@@ -31,7 +31,7 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier
     toBSpline = liftA2 bSpline knotVector controlPoints
 
 instance Spline Bezier v => ControlPoints Bezier v where
-    controlPoints      (Bezier _ cs) = cs
+    controlPoints (Bezier _ cs) = cs
 
 deCasteljau [] t = []
 deCasteljau cs t = cs : deCasteljau (zipWith interp cs (tail cs)) t
