@@ -33,6 +33,7 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier
 instance Spline Bezier v => ControlPoints Bezier v where
     controlPoints (Bezier _ cs) = cs
 
+deCasteljau :: VectorSpace v => [v] -> Scalar v -> [[v]]
 deCasteljau [] t = []
 deCasteljau cs t = cs : deCasteljau (zipWith interp cs (tail cs)) t
     where
