@@ -9,6 +9,8 @@ module Math.Spline.Knots
     , knotMultiplicity, setKnotMultiplicity
     
     , knotDomain
+    
+    , uniform
     ) where
 
 import Prelude hiding (sum)
@@ -106,3 +108,14 @@ knotDomain ks@(Knots n _) p
     where
         kts = knots ks
 
+
+-- |@uniform deg nPts (lo,hi)@ constructs a uniformly-spaced knot vector over
+-- the interval from @lo@ to @hi@ which, when used to construct a B-spline 
+-- with @nPts@ control points will yield one with degree @deg@.
+uniform :: (Ord s, Fractional s) => Int -> Int -> (s,s) -> Knots s
+uniform deg nPts (lo,hi)
+    = fromList [(lo, deg), (hi,deg)]
+    `mappend` mkKnots [f i | i <- [0..n]]
+    where
+        n = nPts - deg
+        f i = (fromIntegral i * lo + fromIntegral (n - i) * hi) / fromIntegral n
