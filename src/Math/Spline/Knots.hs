@@ -1,7 +1,8 @@
 {-# LANGUAGE TypeFamilies #-}
 module Math.Spline.Knots
     ( Knots
-    , empty
+    , empty, isEmpty
+    
     , knot, multipleKnot
     , mkKnots, fromList
     
@@ -62,6 +63,10 @@ instance Foldable Knots where
 -- |An empty knot vector
 empty :: Knots a
 empty = Knots 0 M.empty
+
+isEmpty :: Knots a -> Bool
+isEmpty (Knots 0 _) = True
+isEmpty  _          = False
 
 -- |Create a knot vector consisting of one knot.
 knot :: Ord a => a -> Knots a

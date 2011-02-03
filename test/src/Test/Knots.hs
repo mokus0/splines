@@ -52,6 +52,7 @@ empty_tests =
     , testProperty "round-trip via distinctKnots"   prop_empty_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_empty_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_empty_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_empty_isEmpty
     , testProperty "numKnots"                       prop_empty_numKnots
     , testProperty "numDistinctKnots"               prop_empty_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_empty_knotMultiplicity
@@ -62,6 +63,7 @@ prop_empty_knots_roundTrip         = knots              empty == []
 prop_empty_distinctKnots_roundTrip = distinctKnots      empty == []
 prop_empty_toList_roundTrip        = toList             empty == []
 prop_empty_toMap_roundTrip         = toMap              empty == M.empty
+prop_empty_isEmpty                 = isEmpty empty
 prop_empty_numKnots                = numKnots           empty == 0
 prop_empty_numDistinctKnots        = numDistinctKnots   empty == 0
 prop_empty_knotMultiplicity      x = knotMultiplicity x empty == 0
@@ -73,6 +75,7 @@ knot_tests =
     , testProperty "round-trip via distinctKnots"   prop_knot_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_knot_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_knot_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_knot_isEmpty
     , testProperty "numKnots"                       prop_knot_numKnots
     , testProperty "numDistinctKnots"               prop_knot_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_knot_knotMultiplicity
@@ -83,6 +86,7 @@ prop_knot_knots_roundTrip           x = knots              (knot x) == [x]
 prop_knot_distinctKnots_roundTrip   x = distinctKnots      (knot x) == [x]
 prop_knot_toList_roundTrip          x = toList             (knot x) == [(x,1)]
 prop_knot_toMap_roundTrip           x = toMap              (knot x) == M.singleton x 1
+prop_knot_isEmpty                   x = isEmpty            (knot x) == False
 prop_knot_numKnots                  x = numKnots           (knot x) == 1
 prop_knot_numDistinctKnots          x = numDistinctKnots   (knot x) == 1
 prop_knot_knotMultiplicity        x y = knotMultiplicity x (knot x) == 1
@@ -95,6 +99,7 @@ multipleKnot_tests =
     , testProperty "round-trip via distinctKnots"   prop_multipleKnot_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_multipleKnot_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_multipleKnot_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_multipleKnot_isEmpty
     , testProperty "numKnots"                       prop_multipleKnot_numKnots
     , testProperty "numDistinctKnots"               prop_multipleKnot_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_multipleKnot_knotMultiplicity
@@ -113,8 +118,11 @@ prop_multipleKnot_toList_roundTrip          x (Multiplicity n) =
 prop_multipleKnot_toMap_roundTrip           x (Multiplicity n) =
     toMap         (multipleKnot x n) == M.fromList [(x,n) | n > 0]
 
+prop_multipleKnot_isEmpty                   x (Multiplicity n) =
+    isEmpty (multipleKnot x n) == (n <= 0)
+
 prop_multipleKnot_numKnots                  x (Multiplicity n) =
-    numKnots         (multipleKnot x n) == max 0 n
+    numKnots (multipleKnot x n) == max 0 n
 
 prop_multipleKnot_numDistinctKnots          x (Multiplicity n) =
     numDistinctKnots (multipleKnot x n) == if n > 0 then 1 else 0
@@ -132,6 +140,7 @@ mkKnots_tests =
     , testProperty "round-trip via distinctKnots"   prop_mkKnots_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_mkKnots_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_mkKnots_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_mkKnots_isEmpty
     , testProperty "numKnots"                       prop_mkKnots_numKnots
     , testProperty "numDistinctKnots"               prop_mkKnots_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_mkKnots_knotMultiplicity
@@ -142,6 +151,7 @@ prop_mkKnots_knots_roundTrip         kts = knots              (mkKnots kts) == s
 prop_mkKnots_distinctKnots_roundTrip kts = distinctKnots      (mkKnots kts) == uniq (sort kts)
 prop_mkKnots_toList_roundTrip        kts = toList             (mkKnots kts) == map (head &&& length) (group (sort kts))
 prop_mkKnots_toMap_roundTrip         kts = toMap              (mkKnots kts) == M.fromListWith (+) (map (\k -> (k,1)) kts)
+prop_mkKnots_isEmpty                 kts = isEmpty            (mkKnots kts) == null kts
 prop_mkKnots_numKnots                kts = numKnots           (mkKnots kts) == length kts
 prop_mkKnots_numDistinctKnots        kts = numDistinctKnots   (mkKnots kts) == length (uniq (sort kts))
 prop_mkKnots_knotMultiplicity      x kts = knotMultiplicity x (mkKnots kts) == count (x==) kts
@@ -158,6 +168,7 @@ fromList_tests =
     , testProperty "round-trip via distinctKnots"   prop_fromList_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_fromList_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_fromList_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_fromList_isEmpty
     , testProperty "numKnots"                       prop_fromList_numKnots
     , testProperty "numDistinctKnots"               prop_fromList_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_fromList_knotMultiplicity
@@ -182,6 +193,10 @@ prop_fromList_toMap_roundTrip         (KnotList kts)
     =  toMap (fromList kts)
     == M.fromListWith (+) (filter ((>0).snd) kts)
 
+prop_fromList_isEmpty                 (KnotList kts)
+    =  isEmpty (fromList kts)
+    == null [() | (_,n) <- kts, n > 0]
+
 prop_fromList_numKnots                (KnotList kts)
     =  numKnots (fromList kts)
     == sum [n | (_,n) <- kts, n > 0]
@@ -201,6 +216,7 @@ fromMap_tests =
     , testProperty "round-trip via distinctKnots"   prop_fromMap_distinctKnots_roundTrip
     , testProperty "round-trip via toList"          prop_fromMap_toList_roundTrip
     , testProperty "round-trip via toMap"           prop_fromMap_toMap_roundTrip
+    , testProperty "isEmpty"                        prop_fromMap_isEmpty
     , testProperty "numKnots"                       prop_fromMap_numKnots
     , testProperty "numDistinctKnots"               prop_fromMap_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_fromMap_knotMultiplicity
@@ -219,6 +235,10 @@ prop_fromMap_toList_roundTrip (KnotMap kts)
 prop_fromMap_toMap_roundTrip (KnotMap kts)
     =  toMap (fromMap kts)
     == M.filter (>0) kts
+
+prop_fromMap_isEmpty (KnotMap kts)
+    =  isEmpty (fromMap kts)
+    == M.null (M.filter (>0) kts)
 
 prop_fromMap_numKnots (KnotMap kts)
     =  numKnots (fromMap kts)
