@@ -26,8 +26,6 @@ module Math.Spline.Knots
     , knotSpans
     , knotDomain
     
-    , interior
-    
     , uniform
     ) where
 
@@ -300,11 +298,6 @@ knotSpans ks w
 -- this is also precisely the domain on which de Boor's algorithm is valid.
 knotDomain :: Knots a -> Int -> Maybe (a,a)
 knotDomain ks@(Knots n _) p = knotSpan ks p (n-p-1)
-
--- |Drop the first and last distinct knots from a knot vector, yielding a
--- vector of interior knots
-interior :: Knots a -> Knots a
-interior kts = dropDistinctKnots 1 . takeDistinctKnots (numDistinctKnots kts - 1) $ kts
 
 -- |@uniform deg nPts (lo,hi)@ constructs a uniformly-spaced knot vector over
 -- the interval from @lo@ to @hi@ which, when used to construct a B-spline 
