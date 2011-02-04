@@ -27,10 +27,11 @@ Library
   exposed-modules:      Math.Spline
                         Math.Spline.BezierCurve
                         Math.Spline.BSpline
+                        Math.Spline.BSpline.Reference
                         Math.Spline.Class
                         Math.Spline.ISpline
                         Math.Spline.Knots
                         Math.Spline.MSpline
                         Math.NURBS
   other-modules:        Math.Spline.BSpline.Internal
-  build-depends:        base >= 3 && < 5, containers, vector-space
+  build-depends:        base >= 3 && < 5, containers, polynomial, vector-space
