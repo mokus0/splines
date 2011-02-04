@@ -16,6 +16,7 @@ module Math.Spline.Knots
     , takeKnots, dropKnots, splitKnotsAt
     , takeDistinctKnots, dropDistinctKnots, splitDistinctKnotsAt
     
+    , maxMultiplicity
     , knotMultiplicity, setKnotMultiplicity
     
     , fromAscList, fromDistinctAscList
@@ -30,9 +31,9 @@ module Math.Spline.Knots
     , uniform
     ) where
 
-import Prelude hiding (sum)
+import Prelude hiding (sum, maximum)
 import Control.Monad (guard)
-import Data.Foldable (Foldable(foldMap), sum)
+import Data.Foldable (Foldable(foldMap), sum, maximum)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Maybe (fromMaybe)
@@ -126,6 +127,10 @@ numKnots (Knots n _) = n
 -- |Returns the number of distinct knots in a knot vector.
 numDistinctKnots :: Knots t -> Int
 numDistinctKnots (Knots _ ks) = M.size ks
+
+maxMultiplicity :: Knots t -> Int
+maxMultiplicity (Knots 0  _) = 0
+maxMultiplicity (Knots _ ks) = maximum ks
 
 lookupKnot :: Int -> Knots a -> Maybe a
 lookupKnot k kts

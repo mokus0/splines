@@ -42,6 +42,7 @@ knotsTests =
         [ testGroup "lookupKnot"            lookupKnot_tests
         , testGroup "lookupDistinctKnot"    lookupDistinctKnot_tests
         ]
+    , testGroup "maxMultiplicity"       maxMultiplicity_tests
     ]
 
 -- * Constructors
@@ -56,6 +57,7 @@ empty_tests =
     , testProperty "numKnots"                       prop_empty_numKnots
     , testProperty "numDistinctKnots"               prop_empty_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_empty_knotMultiplicity
+    , testProperty "maxMultiplicity"                prop_empty_maxMultiplicity
     , testProperty "valid"                          prop_empty_valid
     ]
 
@@ -67,6 +69,7 @@ prop_empty_isEmpty                 = isEmpty empty
 prop_empty_numKnots                = numKnots           empty == 0
 prop_empty_numDistinctKnots        = numDistinctKnots   empty == 0
 prop_empty_knotMultiplicity      x = knotMultiplicity x empty == 0
+prop_empty_maxMultiplicity         = maxMultiplicity    empty == 0
 prop_empty_valid                   = valid empty
 
 -- knot
@@ -79,6 +82,7 @@ knot_tests =
     , testProperty "numKnots"                       prop_knot_numKnots
     , testProperty "numDistinctKnots"               prop_knot_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_knot_knotMultiplicity
+    , testProperty "maxMultiplicity"                prop_knot_maxMultiplicity
     , testProperty "valid"                          prop_knot_valid
     ]
 
@@ -91,6 +95,7 @@ prop_knot_numKnots                  x = numKnots           (knot x) == 1
 prop_knot_numDistinctKnots          x = numDistinctKnots   (knot x) == 1
 prop_knot_knotMultiplicity        x y = knotMultiplicity x (knot x) == 1
                                      && knotMultiplicity y (knot x) == if x == y then 1 else 0
+prop_knot_maxMultiplicity           x = maxMultiplicity    (knot x) == 1
 prop_knot_valid                     x = valid (knot x)
 
 -- multipleKnot
@@ -103,6 +108,7 @@ multipleKnot_tests =
     , testProperty "numKnots"                       prop_multipleKnot_numKnots
     , testProperty "numDistinctKnots"               prop_multipleKnot_numDistinctKnots
     , testProperty "knotMultiplicity"               prop_multipleKnot_knotMultiplicity
+    , testProperty "maxMultiplicity"                prop_multipleKnot_maxMultiplicity
     , testProperty "valid"                          prop_multipleKnot_valid
     ]
 
@@ -130,6 +136,9 @@ prop_multipleKnot_numDistinctKnots          x (Multiplicity n) =
 prop_multipleKnot_knotMultiplicity x y (Multiplicity n)
     =  knotMultiplicity x (multipleKnot x n) == max 0 n
     && knotMultiplicity y (multipleKnot x n) == if x == y then max 0 n else 0
+
+prop_multipleKnot_maxMultiplicity x (Multiplicity n)
+    = maxMultiplicity (multipleKnot x n) == max 0 n
 
 prop_multipleKnot_valid x (Multiplicity n)
     = valid (multipleKnot x n)
@@ -305,6 +314,7 @@ splitLookup_tests =
     [ testProperty "output disjoint and ordered"            prop_splitLookup_output_disjointOrdered
     , testProperty "splits input"                           prop_splitLookup_splits_input
     , testProperty "locates n'th knot"                      prop_splitLookup_locates_knot
+    , testProperty "valid"                                  prop_splitLookup_valid
     ]
 
 prop_splitLookup_output_disjointOrdered k kts = and
@@ -335,36 +345,53 @@ splitLookup' k kts =
     , toMap post
     ] where (pre, mbX, post) = splitLookup k kts
 
+prop_splitLookup_valid k kts = all valid [pre, post]
+    where (pre,_,post) = splitLookup k kts
+
 -- takeKnots
 takeKnots_tests =
     [ testProperty "definition"  prop_takeKnots_definition
+    , testProperty "valid"       prop_takeKnots_valid
     ]
 
 prop_takeKnots_definition n kts
     =  knots (takeKnots n kts)
     == take n (knots kts)
 
+prop_takeKnots_valid n kts
+    = valid (takeKnots n kts)
+
 -- dropKnots
 dropKnots_tests =
     [ testProperty "definition"  prop_dropKnots_definition
+    , testProperty "valid"       prop_dropKnots_valid
     ]
 
 prop_dropKnots_definition n kts
     =  knots (dropKnots n kts)
     == drop n (knots kts)
 
+prop_dropKnots_valid n kts
+    = valid (dropKnots n kts)
+
 -- splitKnotsAt
 splitKnotsAt_tests =
     [ testProperty "definition"  prop_splitKnotsAt_definition
+    , testProperty "valid"       prop_splitKnotsAt_valid
     ]
 
 prop_splitKnotsAt_definition n kts
     =  let (ks1, ks2) = splitKnotsAt n kts in (knots ks1, knots ks2)
     == splitAt n (knots kts)
 
+prop_splitKnotsAt_valid n kts = all valid [pre, post]
+    where
+        (pre, post) = splitKnotsAt n kts
+
 -- takeDistinctKnots
 takeDistinctKnots_tests =
     [ testProperty "definition" prop_takeDistinctKnots_definition
+    , testProperty "valid"      prop_takeDistinctKnots_valid
     ]
 
 prop_takeDistinctKnots_definition n kts
@@ -373,9 +400,13 @@ prop_takeDistinctKnots_definition n kts
 
 takeDistinct n = concat . take n . group
 
+prop_takeDistinctKnots_valid n kts
+    = valid (takeDistinctKnots n kts)
+
 -- dropDistinctKnots
 dropDistinctKnots_tests =
     [ testProperty "definition" prop_dropDistinctKnots_definition
+    , testProperty "valid"      prop_dropDistinctKnots_valid
     ]
 
 prop_dropDistinctKnots_definition n kts
@@ -384,9 +415,13 @@ prop_dropDistinctKnots_definition n kts
 
 dropDistinct n = concat . drop n . group
 
+prop_dropDistinctKnots_valid n kts
+    = valid (dropDistinctKnots n kts)
+
 -- splitDistinctKnotsAt
 splitDistinctKnotsAt_tests =
     [ testProperty "definition" prop_splitDistinctKnotsAt_definition
+    , testProperty "valid"      prop_splitDistinctKnotsAt_valid
     ]
 
 prop_splitDistinctKnotsAt_definition n kts
@@ -394,10 +429,22 @@ prop_splitDistinctKnotsAt_definition n kts
         in (knots ks1, knots ks2)
     == (takeDistinct n (knots kts), dropDistinct n (knots kts))
 
+prop_splitDistinctKnotsAt_valid n kts = all valid [pre,post]
+    where (pre,post) = splitDistinctKnotsAt n kts
+
+-- maxMultiplicity
+maxMultiplicity_tests =
+    [ testProperty "definition" prop_maxMultiplicity_definition
+    ]
+prop_maxMultiplicity_definition kts
+    =  maxMultiplicity kts
+    == maximum (0 : [n | (_,n) <- toList kts])
+
 -- setKnotMultiplicity
 setKnotMultiplicity_tests =
     [ testProperty "Sets multiplicity"              prop_setKnotMultiplicity_sets_multiplicity
     , testProperty "Preserves other multiplicities" prop_setKnotMultiplicity_preserves_others
+    , testProperty "valid"                          prop_setKnotMultiplicity_valid
     ]
 
 prop_setKnotMultiplicity_sets_multiplicity kts x (Multiplicity m)
@@ -413,6 +460,9 @@ prop_setKnotMultiplicity_preserves_others kts x (Multiplicity m) =
             else arbitrary
         property  (knotMultiplicity y (setKnotMultiplicity x m kts)
                 == if x == y then max m 0 else knotMultiplicity y kts)
+
+prop_setKnotMultiplicity_valid kts x (Multiplicity m) =
+    valid (setKnotMultiplicity x m kts)
 
 -- lookupKnot
 lookupKnot_tests =
