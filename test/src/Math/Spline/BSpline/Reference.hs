@@ -1,18 +1,23 @@
 {-# LANGUAGE ParallelListComp #-}
 -- |Reference implementation of B-Splines; very inefficient but \"obviously\"
 -- correct.
-module Math.Spline.BSpline.Reference where
+module Math.Spline.BSpline.Reference
+    ( bases
+    , basisFunctions
+    , basisPolynomials
+    , basisPolynomialsAt
+    ) where
 
 import Math.Spline.Knots
 import Math.Polynomial (Poly)
 import qualified Math.Polynomial as Poly
 
+ind True  = 1
+ind False = 0
+
 bases :: (Fractional a, Ord a) => Knots a -> a -> [[a]]
 bases kts x = coxDeBoor interp initial kts
     where
-        ind True  = 1
-        ind False = 0
-
         initial = 
             [ ind (t_j <= x && x < t_jp1)
             | (t_j, t_jp1) <- knotSpans kts 1
@@ -26,9 +31,6 @@ bases kts x = coxDeBoor interp initial kts
 basisFunctions :: (Fractional a, Ord a) => Knots a -> [[a -> a]]
 basisFunctions kts = coxDeBoor interp initial kts
     where
-        ind True  = 1
-        ind False = 0
-
         initial = 
             [ \x -> ind (t_j <= x && x < t_jp1)
             | (t_j, t_jp1) <- knotSpans kts 1
@@ -47,11 +49,11 @@ basisPolynomials kts
 basisPolynomialsAt :: (Fractional a, Ord a) => Knots a -> a -> [[Poly a]]
 basisPolynomialsAt kts x = coxDeBoor interp initial kts
     where
-        ind True  = Poly.one
-        ind False = Poly.zero
+        indPoly True  = Poly.one
+        indPoly False = Poly.zero
         
         initial = 
-            [ ind (t_j <= x && x < t_jp1)
+            [ indPoly (t_j <= x && x < t_jp1)
             | (t_j, t_jp1) <- knotSpans kts 1
             ]
         interp t_j d0 b_nm1_j t_jpnp1 d1 b_nm1_jp1

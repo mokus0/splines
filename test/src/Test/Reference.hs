@@ -1,6 +1,7 @@
 {-# LANGUAGE ParallelListComp, ExtendedDefaultRules #-}
 module Test.Reference where
 
+import Math.Polynomial (evalPoly)
 import Math.Spline.BSpline.Reference
 import Math.Spline.Knots
 import Math.Spline.Knots.Arbitrary
@@ -9,13 +10,16 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck
 
 referenceBSplineTests =
-    [ testGroup "bases" bases_tests
+    [ testGroup "bases"                 bases_tests
+    , testGroup "basisFunctions"        basisFunctions_tests
+    , testGroup "basisPolynomials"      basisPolynomials_tests
+    , testGroup "basisPolynomialsAt"    basisPolynomialsAt_tests
     ]
 
 bases_tests =
     [ testProperty "0 <= f(x) <= 1"     (directed_test prop_bases_bounded)
     , testProperty "count"              (directed_test prop_bases_count)
-    , testProperty "local support"      (directed_test prop_bases_localSupport)
+    , testProperty "local support"      (directed_test prop_bases_localSupport . smaller)
     , testProperty "cover"              (directed_test prop_bases_cover)
     , testProperty "partition of unity" (directed_test (prop_bases_partitionOfUnity (~=)))
     , testProperty "spot check"         prop_bases_spotCheck
@@ -38,9 +42,10 @@ directed_test test kts = frequency $ take (1 + numDistinctKnots kts)
     where
         everywhere = property (test kts)
         atKnots = forAll (elements (distinctKnots kts)) (test kts)
-        onSpans = forAll (elements (spans 1 (distinctKnots kts)))
+        onSpans = forAll (elements (spans (distinctKnots kts)))
             (\(u0,u1) -> forAll arb01 (property . test kts . lerp u0 u1))
         
+        spans xs = zip xs (tail xs)
         lerp x0 x1 a = (1-a) * x0 + a * x1
         
         -- I was using @choose (0,1)@ for this, but that didn't work for 
@@ -64,19 +69,23 @@ prop_bases_count kts x =
         ]
     where m = numKnots kts
 
-prop_bases_localSupport kts x (NonNegative maxOrd) = 
-    not (null us) && minimum us <= x && x < maximum us ==>
+prop_bases_localSupport kts x ns = 
     and [ and
-            [ if u0 <= x && x < u1 
-                then True -- don't require y /= 0, because truncation errors can make false negatives
-                else y == 0
+            [ if u0 < x && x < u1 
+                then y /= (0::Rational)
+                else y == 0 || (x == u0 && y == 1)
             | y <- basis
-            | (u0,u1) <- spans (p+1) us
+            | (u0,u1) <- knotSpans kts (p+1)
             ]
         | basis <- bases kts x
-        | p <- [0..maxOrd]
+        | let m = numKnots kts
+              cutoff = minimum (m : [n `mod` (max 1 m) | n <- ns])
+            -- 'cutoff' is just an arbitrary cutoff value; checking all 
+            -- functions makes the test dramatically slower than the others 
+            -- here.  It was chosen by trial and error, there is nothing 
+            -- sacred or meaningful about it.
+        , p <- [0..cutoff] 
         ]
-    where us = knots kts
 
 -- For every point in the knot vector, for every basis, there are no more than
 -- p-k+1 nonzero basis functions (where p is the order of the basis and k is 
@@ -175,3 +184,40 @@ spotCheck_expected u =
             | u < x0    = 0
             | u >= x1   = 0
             | otherwise = fx
+
+basisFunctions_tests =
+    [ testProperty "equal to bases"     prop_basisFunctions_equals_bases
+    ]
+
+-- Yes, we really want EXACT equality here; these are supposed to just be
+-- different interfaces to the exact same algorithm; if the results are off
+-- by even one ULP, then something is wrong.
+prop_basisFunctions_equals_bases = do
+    kts <- resize 15 arbitrary
+    x <- arbitrary
+    return (bases kts x
+        == [[f x | f <- basis] | basis <- basisFunctions kts])
+
+basisPolynomials_tests =
+    [ testProperty "definition"     prop_basisPolynomials_definition
+    ]
+
+-- Again, we want exact equality here; these are supposed to be different 
+-- interfaces to the exact same algorithm.
+prop_basisPolynomials_definition = do
+    kts <- resize 10 arbitrary
+    return (basisPolynomials kts
+        == [basisPolynomialsAt kts kt 
+           | not (isEmpty kts)
+           , kt <- init (distinctKnots kts)
+           ])
+
+basisPolynomialsAt_tests =
+    [ testProperty "equal to bases"     prop_basisPolynomialsAt_equals_bases
+    ]
+
+prop_basisPolynomialsAt_equals_bases = do
+    kts <- resize 10 arbitrary
+    x <- arbitrary
+    return ((bases kts x :: [[Rational]])
+        == [[evalPoly f x | f <- basis] | basis <- basisPolynomialsAt kts x])
