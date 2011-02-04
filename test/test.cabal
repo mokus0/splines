@@ -19,7 +19,9 @@ Executable splines-test
   main-is:              Tests.hs
   build-depends:        base >= 3 && <5,
                         containers,
+                        polynomial,
                         splines,
                         test-framework,
                         test-framework-quickcheck2,
-                        QuickCheck >= 2
+                        QuickCheck >= 2,
+                        vector-space

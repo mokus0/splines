@@ -34,8 +34,7 @@ basesAt kts xLoc (/) lift xVal = bs
             [ [ (if d0 == 0 then 0 else (xVal         - lift t_j) / d0) * b_nm1_j
               + (if d1 == 0 then 0 else (lift t_jpnp1 -     xVal) / d1) * b_nm1_jp1
               | (b_nm1_j, b_nm1_jp1)    <- spans 1 prevBasis
-              | d0                      <- spanDiffs n ts
-              | d1                      <- tail (spanDiffs n ts)
+              | (d0, d1)                <- spans 1 (spanDiffs n ts)
               | (t_j, t_jpnp1)          <- spans (n+1) ts
               ]
             | prevBasis <- bs
