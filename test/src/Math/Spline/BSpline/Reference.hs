@@ -21,6 +21,8 @@ bases kts x = coxDeBoor kts interp initial
             = (if d0 == 0 then 0 else (x       - t_j) / d0) * b_nm1_j
             + (if d1 == 0 then 0 else (t_jpnp1 -   x) / d1) * b_nm1_jp1
 
+-- Alternate version constructing table of functions rather than computing
+-- table of values
 basisFunctions :: (Fractional a, Ord a) => Knots a -> [[a -> a]]
 basisFunctions kts = coxDeBoor kts interp initial
     where
@@ -32,9 +34,16 @@ basisFunctions kts = coxDeBoor kts interp initial
             | (t_j, t_jp1) <- knotSpans kts 1
             ]
         interp t_j d0 b_nm1_j t_jpnp1 d1 b_nm1_jp1 x
-            = (if d0 == 0 then 0 else (x       - t_j)     / d0) * b_nm1_j   x
+            = (if d0 == 0 then 0 else (x       - t_j) / d0) * b_nm1_j   x
             + (if d1 == 0 then 0 else (t_jpnp1 -   x) / d1) * b_nm1_jp1 x
 
+-- compute all the basis polynomials for a knot vector, ordered by knot span.
+basisPolynomials :: (Fractional a, Ord a) => Knots a -> [[[Poly a]]]
+basisPolynomials kts
+    | isEmpty kts   = []
+    | otherwise     = [basisPolynomialsAt kts kt | kt <- init (distinctKnots kts)]
+
+-- compute all the basis polynomials for the knot span containing a given location.
 basisPolynomialsAt :: (Fractional a, Ord a) => Knots a -> a -> [[Poly a]]
 basisPolynomialsAt kts x = coxDeBoor kts interp initial
     where
