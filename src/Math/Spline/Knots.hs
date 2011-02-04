@@ -23,6 +23,7 @@ module Math.Spline.Knots
     , valid
     
     , knotSpan
+    , knotsInSpan
     , knotSpans
     , knotDomain
     
@@ -279,6 +280,11 @@ knotSpan ks i j = do
     lo <- lookupKnot i ks
     hi <- lookupKnot j ks
     return (lo,hi)
+
+-- |@knotsInSpan kts i j@ returns the knots in the knot span extending from
+-- the @i@'th knot to the @j@'th knot
+knotsInSpan :: Knots a -> Int -> Int -> Knots a
+knotsInSpan kts i j = takeKnots (j - i) (dropKnots i kts)
 
 -- |@knotSpans kts width@ returns all knot spans of a given width in
 -- ascending order.
