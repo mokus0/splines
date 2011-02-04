@@ -3,8 +3,8 @@ module Main where
 
 import Test.Framework (defaultMain, testGroup)
 
-import Test.Knots (knotsTests)
-import Test.Reference (referenceBSplineTests)
+import Tests.BSpline.Reference (referenceBSplineTests)
+import Tests.Knots (knotsTests)
 
 main = defaultMain 
     [ testGroup "Math.Spline.BSpline.Reference" referenceBSplineTests

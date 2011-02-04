@@ -1,5 +1,5 @@
 {-# LANGUAGE ParallelListComp, ExtendedDefaultRules #-}
-module Test.Reference where
+module Tests.BSpline.Reference where
 
 import Math.Polynomial (evalPoly)
 import Math.Spline.BSpline.Reference

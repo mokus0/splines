@@ -1,5 +1,5 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
-module Test.Knots where
+module Tests.Knots where
 
 import Control.Arrow
 import Control.Monad (guard)
