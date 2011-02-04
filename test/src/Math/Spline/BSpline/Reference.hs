@@ -8,7 +8,7 @@ import Math.Polynomial (Poly)
 import qualified Math.Polynomial as Poly
 
 bases :: (Fractional a, Ord a) => Knots a -> a -> [[a]]
-bases kts x = coxDeBoor kts interp initial
+bases kts x = coxDeBoor interp initial kts
     where
         ind True  = 1
         ind False = 0
@@ -24,7 +24,7 @@ bases kts x = coxDeBoor kts interp initial
 -- Alternate version constructing table of functions rather than computing
 -- table of values
 basisFunctions :: (Fractional a, Ord a) => Knots a -> [[a -> a]]
-basisFunctions kts = coxDeBoor kts interp initial
+basisFunctions kts = coxDeBoor interp initial kts
     where
         ind True  = 1
         ind False = 0
@@ -45,7 +45,7 @@ basisPolynomials kts
 
 -- compute all the basis polynomials for the knot span containing a given location.
 basisPolynomialsAt :: (Fractional a, Ord a) => Knots a -> a -> [[Poly a]]
-basisPolynomialsAt kts x = coxDeBoor kts interp initial
+basisPolynomialsAt kts x = coxDeBoor interp initial kts
     where
         ind True  = Poly.one
         ind False = Poly.zero
@@ -71,7 +71,7 @@ basisPolynomialsAt kts x = coxDeBoor kts interp initial
 -- and the actual computation of the recursion step is a function parameter.
 -- The purpose is to allow the same recursion to be applied when computing basis
 -- function values and  basis polynomials.
-coxDeBoor kts interp initial = table
+coxDeBoor interp initial kts = table
     where
         ts = knots kts
         table = initial :
