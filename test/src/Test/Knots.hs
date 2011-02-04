@@ -482,8 +482,8 @@ lookupDistinctKnot_tests =
     ]
 
 prop_lookupDistinctKnot_definition kts n
-    | n < 0     = lookupDistinctKnot n kts == Nothing
-    | otherwise = lookupDistinctKnot n kts == listToMaybe (drop n (distinctKnots kts))
+    =  lookupDistinctKnot n kts
+    == index n (distinctKnots kts)
 
 -- knotDomain
 -- 

@@ -270,7 +270,7 @@ valid :: Ord k => Knots k -> Bool
 valid (Knots n ks) = and
     [ M.valid ks
     , n == sum ks
-    , all ((>0).snd) (M.toAscList ks)
+    , all (>0) (M.elems ks)
     ]
 
 -- |@knotSpan kts i j@ returns the knot span extending from the @i@'th knot
