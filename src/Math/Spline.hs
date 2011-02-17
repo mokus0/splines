@@ -1,5 +1,5 @@
 module Math.Spline
-    ( Spline(..)
+    ( Spline(..), ControlPoints(..)
     
     , Knots, mkKnots, knots
     
