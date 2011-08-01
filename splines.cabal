@@ -9,6 +9,8 @@ author:                 James Cook <mokus@deepbondi.net>
 maintainer:             James Cook <mokus@deepbondi.net>
 license:                PublicDomain
 
+home-page:              https://github.com/mokus0/splines
+
 category:               Graphics, Numerical, Math
 synopsis:               B-Splines, other splines, and NURBS.
 description:            This is a fairly simple implementation of a 
@@ -19,8 +21,8 @@ description:            This is a fairly simple implementation of a
                         and/or feature requests are welcome.
 
 source-repository head
-    type: darcs
-    location: http://code.haskell.org/~mokus/splines/
+    type: git
+    location: git://github.com/mokus0/splines.git
 
 Library
   hs-source-dirs:       src
@@ -34,4 +36,7 @@ Library
                         Math.Spline.MSpline
                         Math.NURBS
   other-modules:        Math.Spline.BSpline.Internal
-  build-depends:        base >= 3 && < 5, containers, polynomial, vector-space
+  build-depends:        base >= 3 && < 5,
+                        containers,
+                        polynomial,
+                        vector-space
