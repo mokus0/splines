@@ -9,17 +9,18 @@ import Math.Spline.Class
 import Math.Spline.Knots
 
 import Control.Applicative
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |A BezierCurve curve on @0 <= x <= 1@.
-data BezierCurve v = BezierCurve !Int [v] deriving (Eq, Ord)
+data BezierCurve t = BezierCurve !Int !(V.Vector t) deriving (Eq, Ord)
 
 -- |Construct a Bezier curve from a list of control points.  The degree
 -- of the curve is one less than the number of control points.
-bezierCurve :: [v] -> BezierCurve v
+bezierCurve :: V.Vector t -> BezierCurve t
 bezierCurve cs
-    | null cs   = error "bezierCurve: no control points given"
-    | otherwise = BezierCurve (length cs - 1) cs
+    | V.null cs = error "bezierCurve: no control points given"
+    | otherwise = BezierCurve (V.length cs - 1) cs
 
 instance Show v => Show (BezierCurve v) where
     showsPrec p (BezierCurve _ cs) = showParen (p>10)
@@ -29,7 +30,7 @@ instance Show v => Show (BezierCurve v) where
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BezierCurve v where
     splineDomain (BezierCurve _  _) = Just (0,1)
-    evalSpline   (BezierCurve _ cs) = head . last . deCasteljau cs
+    evalSpline   (BezierCurve _ cs) = V.head . last . deCasteljau cs
     splineDegree (BezierCurve p  _) = p
     knotVector   (BezierCurve p  _) = fromList [(0, p+1), (1, p+1)]
     toBSpline = bSpline <$> knotVector <*> controlPoints
@@ -37,9 +38,10 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline Bezier
 instance Spline BezierCurve v => ControlPoints BezierCurve v where
     controlPoints (BezierCurve _ cs) = cs
 
-deCasteljau :: VectorSpace v => [v] -> Scalar v -> [[v]]
-deCasteljau [] t = []
-deCasteljau cs t = cs : deCasteljau (zipWith interp cs (tail cs)) t
+deCasteljau :: VectorSpace v => V.Vector v -> Scalar v -> [V.Vector v]
+deCasteljau cs t
+    | V.null cs = []
+    | otherwise = cs : deCasteljau (V.zipWith interp cs (V.tail cs)) t
     where
         interp x0 x1 = lerp x0 x1 t
 
@@ -52,6 +54,6 @@ deCasteljau cs t = cs : deCasteljau (zipWith interp cs (tail cs)) t
 -- 
 splitBezierCurve :: VectorSpace v => BezierCurve v -> Scalar v -> (BezierCurve v, BezierCurve v)
 splitBezierCurve (BezierCurve n cs) t = 
-    ( BezierCurve n (map head css)
-    , BezierCurve n (reverse (map last css))
+    ( BezierCurve n (V.fromList (map V.head css))
+    , BezierCurve n (V.reverse (V.fromList (map V.last css)))
     ) where css = deCasteljau cs t

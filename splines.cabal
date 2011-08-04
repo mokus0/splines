@@ -1,5 +1,5 @@
 name:                   splines
-version:                0.2
+version:                0.3
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -39,4 +39,5 @@ Library
   build-depends:        base >= 3 && < 5,
                         containers,
                         polynomial,
+                        vector,
                         vector-space

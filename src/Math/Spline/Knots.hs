@@ -6,11 +6,17 @@ module Math.Spline.Knots
     , knot, multipleKnot
     , mkKnots, fromList
     
-    , knots, numKnots, lookupKnot
-    , toList, distinctKnots, numDistinctKnots, lookupDistinctKnot
+    , numKnots, lookupKnot
+    , toList, numDistinctKnots, lookupDistinctKnot
+    
+    , knots, knotsVector
+    , distinctKnots, distinctKnotsVector
     
     , toMap
     , fromMap
+    
+    , toVector
+    , fromVector
     
     , splitLookup
     , takeKnots, dropKnots, splitKnotsAt
@@ -37,6 +43,7 @@ import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S (Set)
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
@@ -111,10 +118,16 @@ fromMap ks = Knots (sum kMap) kMap
         -- filter is monotonic, I have no idea why M.filter requires Ord on the key
         mFilter p = M.fromDistinctAscList . filter (p.snd) . M.toAscList
 
+fromVector :: Ord k => V.Vector (k,Int) -> Knots k
+fromVector = fromList . V.toList
+
 -- |Returns a list of all distinct knots in ascending order along with
 -- their multiplicities.
 toList :: Knots k -> [(k, Int)]
 toList = M.toList . toMap
+
+toVector :: Knots k -> V.Vector (k, Int)
+toVector = V.fromList . toList
 
 toMap :: Knots k -> M.Map k Int
 toMap (Knots _ ks) = ks
@@ -243,9 +256,17 @@ splitDistinctKnotsAt k (Knots n ks) = (Knots sz1 kMap1, Knots (n - sz1) kMap2)
 knots :: Knots t -> [t]
 knots (Knots _ ks) = concat [replicate n k | (k,n) <- M.toAscList ks]
 
+-- |Returns a vector of all knots (not necessarily distinct) of a knot vector in ascending order
+knotsVector :: Knots t -> V.Vector t
+knotsVector (Knots _ ks) = V.concat [V.replicate n k | (k,n) <- M.toAscList ks]
+
 -- |Returns a list of all distinct knots of a knot vector in ascending order
 distinctKnots :: Knots t -> [t]
 distinctKnots (Knots _ ks) = M.keys ks
+
+-- |Returns a vector of all distinct knots of a knot vector in ascending order
+distinctKnotsVector :: Knots t -> V.Vector t
+distinctKnotsVector = V.fromList . distinctKnots
 
 -- |Returns a 'S.Set' of all distinct knots of a knot vector
 distinctKnotsSet :: Knots k -> S.Set k

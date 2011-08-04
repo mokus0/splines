@@ -5,6 +5,7 @@ import Control.Applicative
 import Math.Spline.Knots
 import qualified Math.Spline.BSpline.Internal as BSpline
 
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |A spline is a piecewise polynomial vector-valued function.  The necessary
@@ -32,10 +33,10 @@ class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     toBSpline :: s v -> BSpline.BSpline v
 
 class Spline s v => ControlPoints s v where
-    controlPoints :: s v -> [v]
+    controlPoints :: s v -> V.Vector v
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BSpline.BSpline v where
-    evalSpline spline = head . last . BSpline.deBoor spline
+    evalSpline spline = V.head . last . BSpline.deBoor spline
     splineDegree = BSpline.degree
     knotVector = BSpline.knotVector
     toBSpline = id

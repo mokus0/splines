@@ -7,6 +7,7 @@ module Math.NURBS
     , splitNURBS
     ) where
 
+import qualified Data.Vector as V
 import Data.VectorSpace
 import Math.Spline.Class (Spline, toBSpline)
 import Math.Spline.BSpline.Internal
@@ -28,19 +29,19 @@ toNURBS = NURBS . mapControlPoints (\p -> (1,p)) . toBSpline
 
 nurbs :: (VectorSpace v, Scalar v ~ w,
           VectorSpace w, Scalar w ~ w)
-       => Knots (Scalar v) -> [(w, v)] -> NURBS v
+       => Knots (Scalar v) -> V.Vector (w, v) -> NURBS v
 nurbs kts cps = NURBS (bSpline kts cps)
 
 -- |Constructs the homogeneous-coordinates B-spline that corresponds to this
 -- NURBS curve
 nurbsAsSpline (NURBS spline) = spline 
-    { controlPoints = map homogenize (controlPoints spline) }
+    { controlPoints = V.map homogenize (controlPoints spline) }
     where
         homogenize (w,v) = (w, w *^ v)
 
 -- |Constructs the NURBS curve corresponding to a homogeneous-coordinates B-spline
 splineAsNURBS spline = NURBS spline 
-    { controlPoints = map unHomogenize (controlPoints spline) }
+    { controlPoints = V.map unHomogenize (controlPoints spline) }
     where
         unHomogenize (w,v) = (w, recip w *^ v)
 
@@ -67,7 +68,7 @@ nurbsDegree (NURBS spline) = degree spline
 nurbsKnotVector :: Scalar v ~ Scalar (Scalar v) => NURBS v -> Knots (Scalar v)
 nurbsKnotVector (NURBS spline) = knotVector spline
 
-nurbsControlPoints :: NURBS v -> [(Scalar v, v)]
+nurbsControlPoints :: NURBS v -> V.Vector (Scalar v, v)
 nurbsControlPoints (NURBS spline) = controlPoints spline
 
 splitNURBS :: (VectorSpace v, Scalar v ~ w,

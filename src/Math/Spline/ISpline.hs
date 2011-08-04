@@ -12,7 +12,7 @@ module Math.Spline.ISpline
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
-
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |The I-Spline basis functions are the integrals of the M-splines, or
@@ -23,7 +23,7 @@ import Data.VectorSpace
 data ISpline v = ISpline
     { iSplineDegree        :: !Int
     , iSplineKnotVector    :: Knots (Scalar v)
-    , iSplineControlPoints :: [v]
+    , iSplineControlPoints :: !(V.Vector v)
     }
 
 deriving instance (Eq   (Scalar v), Eq   v) => Eq   (ISpline v)
@@ -41,19 +41,19 @@ instance (Show (Scalar v), Show v) => Show (ISpline v) where
 -- points.  The degree is automatically inferred as the difference between the 
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
-iSpline :: Knots (Scalar a) -> [a] -> ISpline a
+iSpline :: Knots (Scalar a) -> V.Vector a -> ISpline a
 iSpline kts cps 
     | n > m     = error "iSpline: too few knots"
     | otherwise = ISpline (m - n) kts cps
     where
-        n = length cps
+        n = V.length cps
         m = numKnots kts - 1
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline ISpline v where
     splineDegree = (1 +) . iSplineDegree
     knotVector spline = mkKnots (head ts : ts ++ [last ts])
         where ts = knots (iSplineKnotVector spline)
-    toBSpline spline = bSpline (knotVector spline) (scanl (^+^) zeroV cs)
+    toBSpline spline = bSpline (knotVector spline) (V.scanl (^+^) zeroV cs)
         where cs = iSplineControlPoints spline
 
 instance Spline ISpline v => ControlPoints ISpline v where
@@ -63,12 +63,12 @@ toISpline :: (Spline s v, Eq v) => s v -> ISpline v
 toISpline = fromBSpline . toBSpline
 
 fromBSpline spline
-    | head ds == zeroV 
-    && numKnots ks >= 2 = iSpline (mkKnots (init (tail ts))) (tail ds')
+    | V.head ds == zeroV 
+    && numKnots ks >= 2 = iSpline (mkKnots (init (tail ts))) (V.tail ds')
     | otherwise         = iSpline (mkKnots (init       ts )) ds'
     where
         ks = knotVector spline
         ts = knots ks
         ds = controlPoints spline
         
-        ds' = zipWith (^-^) ds (zeroV:ds)
+        ds' = V.zipWith (^-^) ds (V.cons zeroV ds)

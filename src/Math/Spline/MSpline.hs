@@ -12,7 +12,7 @@ module Math.Spline.MSpline
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
-
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |M-Splines are B-splines normalized so that the integral of each basis 
@@ -20,7 +20,7 @@ import Data.VectorSpace
 data MSpline v = MSpline
     { mSplineDegree        :: !Int
     , mSplineKnotVector    :: Knots (Scalar v)
-    , mSplineControlPoints :: [v]
+    , mSplineControlPoints :: !(V.Vector v)
     }
 
 deriving instance (Eq   (Scalar v), Eq   v) => Eq   (MSpline v)
@@ -38,15 +38,15 @@ instance (Show (Scalar v), Show v) => Show (MSpline v) where
 -- points.  The degree is automatically inferred as the difference between the 
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
-mSpline :: Knots (Scalar a) -> [a] -> MSpline a
+mSpline :: Knots (Scalar a) -> V.Vector a -> MSpline a
 mSpline kts cps
     | n > m     = error "mSpline: too few knots"
     | otherwise = MSpline (m - n) kts cps
     where
-        n = length cps
+        n = V.length cps
         m = numKnots kts - 1
 
-spans n xs = zip xs (drop n xs)
+spans n xs = V.zip xs (V.drop n xs)
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSpline v where
     splineDegree = mSplineDegree
@@ -54,10 +54,8 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSplin
     toBSpline (MSpline p ks cs) = bSpline ks cs'
         where
             n = p + 1; n' = fromIntegral n
-            cs' = [ (n' / (t1 - t0)) *^ c 
-                  | c <- cs
-                  | (t0, t1) <- spans n (knots ks)
-                  ]
+            cs' = V.zipWith f cs (spans n (V.fromList (knots ks)))
+            f c (t0, t1) = ((n' / (t1 - t0)) *^ c)
 
 instance Spline MSpline v => ControlPoints MSpline v where
     controlPoints = mSplineControlPoints
@@ -69,7 +67,5 @@ fromBSpline spline = mSpline ks cs
     where
         n = splineDegree spline + 1; n' = fromIntegral n
         ks = knotVector spline
-        cs =  [ ((t1 - t0) / n') *^ c
-              | c <- controlPoints spline
-              | (t0, t1) <- spans n (knots ks)
-              ]
+        cs = V.zipWith f (controlPoints spline) (spans n (V.fromList (knots ks)))
+        f c (t0, t1) = ((t1 - t0) / n') *^ c
