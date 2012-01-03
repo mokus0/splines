@@ -9,8 +9,6 @@ author:                 James Cook <mokus@deepbondi.net>
 maintainer:             James Cook <mokus@deepbondi.net>
 license:                PublicDomain
 
-home-page:              https://github.com/mokus0/splines
-
 category:               Graphics, Numerical, Math
 synopsis:               B-Splines, other splines, and NURBS.
 description:            This is a fairly simple implementation of a 
