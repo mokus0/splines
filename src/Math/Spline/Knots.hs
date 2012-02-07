@@ -34,6 +34,9 @@ module Math.Spline.Knots
     , knotDomain
     
     , uniform
+    
+    , minKnot
+    , maxKnot
     ) where
 
 import Prelude hiding (sum, maximum)
@@ -336,3 +339,14 @@ uniform deg nPts (lo,hi) = ends `mappend` internal
         n = nPts + deg - numKnots ends
         f i = (fromIntegral i * lo + fromIntegral (n - i) * hi) / fromIntegral n
         internal = mkKnots [f i | i <- [0..n]]
+
+minKnot :: Knots a -> Maybe (a, Int)
+minKnot (Knots _ m)
+    | M.null m  = Nothing
+    | otherwise = Just (M.findMin m)
+
+maxKnot :: Knots a -> Maybe (a, Int)
+maxKnot (Knots _ m)
+    | M.null m  = Nothing
+    | otherwise = Just (M.findMax m)
+
