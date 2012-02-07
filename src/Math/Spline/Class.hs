@@ -36,7 +36,7 @@ class Spline s v => ControlPoints s v where
     controlPoints :: s v -> V.Vector v
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BSpline.BSpline v where
-    evalSpline spline = V.head . last . BSpline.deBoor spline
+    evalSpline = BSpline.evalBSpline
     splineDegree = BSpline.degree
     knotVector = BSpline.knotVector
     toBSpline = id
