@@ -98,8 +98,7 @@ slice spline x = spline
     }
     where
         l = maybe 0 id $ V.findIndex (> x) us
-        deg = degree spline
-        n = deg + 1
+        n = degree spline + 1
         
         us = knotsVector (knotVector spline)
 
