@@ -10,7 +10,7 @@ module Math.Spline.Knots
     , toList, numDistinctKnots, lookupDistinctKnot
     
     , knots, knotsVector
-    , distinctKnots, distinctKnotsVector
+    , distinctKnots, distinctKnotsVector, distinctKnotsSet
     
     , toMap
     , fromMap
@@ -47,13 +47,12 @@ import Data.Monoid (Monoid(..))
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S (Set)
 import qualified Data.Vector as V
-import Data.VectorSpace
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
 data Knots a = Knots !Int (M.Map a Int) deriving (Eq, Ord)
 
 instance Show a => Show (Knots a) where
-    showsPrec p ks@(Knots 0 _) = showString "empty"
+    showsPrec _    (Knots 0 _) = showString "empty"
     showsPrec p ks@(Knots 1 _) = showParen (p > 10)
         ( showString "knot "
         . showsPrec 11 (head $ knots ks)
@@ -185,25 +184,30 @@ splitLookup k (Knots n ks) = scan 0 M.empty n ks
             | nPre + m > k  = (Knots nPre  pre, Just kt, Knots nNewPost newPost)
             | otherwise     = scan (nPre + m) (pre `ascSnoc` kt) nNewPost newPost
             where
-                Just (kt@(x,m), newPost)  = M.minViewWithKey post
+                Just (kt@(_,m), newPost)  = M.minViewWithKey post
                 nNewPost = nPost - m
-                done x = (Knots nPre  pre, x, Knots nPost post)
 
 -- Prepend or append an element to a map, without checking the precondition
 -- that the new pair's key is less than (greater than, resp.) all keys in 
 -- the map.
+ascCons :: (k, a) -> M.Map k a -> M.Map k a
 ascCons x m = M.fromDistinctAscList (x : M.toAscList m)
+
+ascSnoc :: M.Map k a -> (k, a) -> M.Map k a
 ascSnoc m x = M.fromDistinctAscList (M.toAscList m ++ [x])
 
 -- Prepend or append an knot to a knot vector, without checking the
 -- precondition that the new knot's location is less than (greater than,
 -- resp.) all knots in the vector.
+ascConsKnot :: (k, Int) -> Knots k -> Knots k
 ascConsKnot (_,0) kts = kts
-ascConsKnot kt@(k,m) (Knots n ks) = Knots (n+m) (kt `ascCons` ks)
+ascConsKnot kt@(_,m) (Knots n ks) = Knots (n+m) (kt `ascCons` ks)
 
+ascSnocKnot :: Knots k -> (k, Int) -> Knots k
 ascSnocKnot kts (_,0) = kts
-ascSnocKnot (Knots n ks) kt@(k,m) = Knots (n+m) (ks `ascSnoc` kt)
+ascSnocKnot (Knots n ks) kt@(_,m) = Knots (n+m) (ks `ascSnoc` kt)
 
+clamp :: Ord a => a -> a -> a -> a
 clamp lo hi = max lo . min hi
 
 dropKnots :: Int -> Knots a -> Knots a
@@ -213,7 +217,7 @@ dropKnots k kts = fromMaybe post $ do
         
         return ((x, clamp 0 xAvail xWanted) `ascConsKnot` post)
     where
-        (pre, mbKt, post) = splitLookup k kts
+        (_, mbKt, post) = splitLookup k kts
 
 takeKnots :: Int -> Knots a -> Knots a
 takeKnots k kts = fromMaybe pre $ do
@@ -222,7 +226,7 @@ takeKnots k kts = fromMaybe pre $ do
     
         return (pre `ascSnocKnot` (x, clamp 0 xAvail xWanted))
     where
-        (pre, mbKt, post) = splitLookup k kts
+        (pre, mbKt, _) = splitLookup k kts
 
 splitKnotsAt :: Int -> Knots a -> (Knots a, Knots a)
 splitKnotsAt k kts = fromMaybe (pre, post) $ do
@@ -236,14 +240,13 @@ splitKnotsAt k kts = fromMaybe (pre, post) $ do
     where
         (pre, mbKt, post) = splitLookup k kts
 
-
 takeDistinctKnots :: Int -> Knots a -> Knots a
-takeDistinctKnots k (Knots n ks) = Knots (sum kMap) kMap
+takeDistinctKnots k (Knots _ ks) = Knots (sum kMap) kMap
     where
         kMap = M.fromDistinctAscList (take k (M.toAscList ks))
 
 dropDistinctKnots :: Int -> Knots a -> Knots a
-dropDistinctKnots k (Knots n ks) = Knots (sum kMap) kMap
+dropDistinctKnots k (Knots _ ks) = Knots (sum kMap) kMap
     where
         kMap = M.fromDistinctAscList (drop k (M.toAscList ks))
 

@@ -8,7 +8,7 @@ module Math.NURBS
     ) where
 
 import qualified Data.Vector as V
-import Data.VectorSpace
+import Data.VectorSpace hiding (project)
 import Math.Spline.Class (Spline, toBSpline)
 import Math.Spline.BSpline.Internal
 import Math.Spline.BSpline
@@ -34,16 +34,18 @@ nurbs kts cps = NURBS (bSpline kts cps)
 
 -- |Constructs the homogeneous-coordinates B-spline that corresponds to this
 -- NURBS curve
+nurbsAsSpline :: VectorSpace v => NURBS v -> BSpline (Scalar v, v)
 nurbsAsSpline (NURBS spline) = spline 
     { controlPoints = V.map homogenize (controlPoints spline) }
     where
-        homogenize (w,v) = (w, w *^ v)
+        homogenize (w,v) = (w, v ^* w)
 
 -- |Constructs the NURBS curve corresponding to a homogeneous-coordinates B-spline
+splineAsNURBS :: (VectorSpace v, Fractional (Scalar v)) => BSpline (Scalar v, v) -> NURBS v
 splineAsNURBS spline = NURBS spline 
     { controlPoints = V.map unHomogenize (controlPoints spline) }
     where
-        unHomogenize (w,v) = (w, recip w *^ v)
+        unHomogenize (w,v) = (w, v ^/ w)
 
 
 evalNURBS
@@ -51,7 +53,7 @@ evalNURBS
       VectorSpace w, Scalar w ~ w,
       Fractional w, Ord w) =>
      NURBS v -> w -> v
-evalNURBS nurbs = project . evalBSpline (nurbsAsSpline nurbs)
+evalNURBS f = project . evalBSpline (nurbsAsSpline f)
     where
         project (w,v) = recip w *^ v
 
@@ -75,6 +77,6 @@ splitNURBS :: (VectorSpace v, Scalar v ~ w,
                VectorSpace w, Scalar w ~ w,
                Ord w, Fractional w)
     => NURBS v -> Scalar v -> Maybe (NURBS v, NURBS v)
-splitNURBS nurbs t = do
-    (s0, s1) <- splitBSpline (nurbsAsSpline nurbs) t
+splitNURBS f t = do
+    (s0, s1) <- splitBSpline (nurbsAsSpline f) t
     return (splineAsNURBS s0, splineAsNURBS s1)

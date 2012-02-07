@@ -1,4 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Math.Spline.BSpline.Internal
     ( BSpline(..)
     , mapControlPoints
@@ -14,7 +17,6 @@ import Math.Spline.Knots
 import Math.Spline.BSpline.Reference (bases)
 
 import Data.Monoid
-import Data.Ratio
 import Data.Vector as V hiding (slice)
 import Data.VectorSpace
 import Prelude as P
@@ -25,14 +27,33 @@ data BSpline t = Spline
     , controlPoints :: Vector t
     }
 
+deriving instance (Eq   (Scalar v), Eq   v) => Eq   (BSpline v)
+deriving instance (Ord  (Scalar v), Ord  v) => Ord  (BSpline v)
+instance (Show (Scalar v), Show v) => Show (BSpline v) where
+    showsPrec p (Spline _ kts cps) = showParen (p>10) 
+        ( showString "bSpline "
+        . showsPrec 11 kts
+        . showChar ' '
+        . showsPrec 11 cps
+        )
+
+mapControlPoints :: (Scalar a ~ Scalar b) => (a -> b) -> BSpline a -> BSpline b
 mapControlPoints f spline = spline
     { controlPoints = V.map f (controlPoints spline)
     , knotVector = knotVector spline
     }
 
+evalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
+     => BSpline v -> Scalar v -> v
 evalBSpline spline = V.head . P.last . deBoor spline
+
+evalNaturalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
+    => BSpline v -> Scalar v -> v
 evalNaturalBSpline spline x = V.head (P.last (deBoor (slice spline x) x))
-evalReferenceBSpline (Spline deg kts cps) x = P.sum (P.zipWith (*) (bases kts x !! deg) (V.toList cps))
+
+evalReferenceBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
+    => BSpline v -> Scalar v -> v
+evalReferenceBSpline (Spline deg kts cps) x = sumV (P.zipWith (*^) (bases kts x !! deg) (V.toList cps))
 
 -- |Insert one knot into a 'BSpline'
 insertKnot
@@ -49,6 +70,7 @@ insertKnot spline x = spline
 
 -- duplicate the endpoints of a list; for example,
 -- extend [1..5] -> [1,1,2,3,4,5,5]
+extend :: Vector t -> Vector t
 extend vec
     | V.null vec    = V.empty
     | otherwise     = V.cons (V.head vec) (V.snoc vec (V.last vec))
@@ -57,13 +79,15 @@ extend vec
 -- (for example, if you are only evaluating the spline), then use 'slice' on the spline first.
 -- 'splitBSpline' currently uses the whole table.  It is probably not necessary there, but it 
 -- greatly simplifies the definition and makes the similarity to splitting Bezier curves very obvious.
-deBoor spline x = go us (controlPoints spline)
+deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a)
+    => BSpline a -> Scalar a -> [Vector a]
+deBoor spline x = go us0 (controlPoints spline)
     where
-        us = knotsVector (knotVector spline)
+        us0 = knotsVector (knotVector spline)
         -- Upper endpoints of the intervals are the same for
         -- each row in the table (they just line up differently
         -- with the lower endpoints):
-        uHi = V.drop (degree spline + 1) us
+        uHi = V.drop (degree spline + 1) us0
 
         -- On each pass, the lower endpoints of the
         -- interpolation intervals advance and the new
@@ -77,6 +101,8 @@ deBoor spline x = go us (controlPoints spline)
                 ds' = V.zipWith4 (interp x) uLo uHi
                                             ds (V.tail ds)
 
+interp :: (Fractional (Scalar v), Ord (Scalar v), VectorSpace v)
+    => Scalar v -> Scalar v -> Scalar v -> v -> v -> v
 interp x x0 x1 y0 y1
     |  x <  x0  = y0
     |  x >= x1  = y1
@@ -92,6 +118,8 @@ interp x x0 x1 y0 y1
 -- slice (slice f x) x == slice f x
 -- {x in domain of f} => {x in domain of slice f x}
 -- {x in domain of f} => evalBSpline (slice f x) x == evalBSpline f x
+slice :: (Num (Scalar v), Ord (Scalar v), AdditiveGroup v)
+     => BSpline v -> Scalar v -> BSpline v
 slice spline x = spline
     { knotVector    = stakeKnots (n + n) . sdropKnots (l - n) $ knotVector spline
     , controlPoints = vtake       n      . vdrop      (l - n) $ controlPoints spline
@@ -103,16 +131,19 @@ slice spline x = spline
         us = knotsVector (knotVector spline)
 
 -- Try to take n, but if there's not enough, pad the rest with 0s
+vtake :: AdditiveGroup t => Int -> Vector t -> Vector t
 vtake n xs
     | n <= V.length xs = V.take n xs
     | otherwise = xs V.++ V.replicate (n - V.length xs) zeroV
 
 -- Try to drop n, but if n is negative, pad the beginning with 0s
+vdrop :: AdditiveGroup t => Int -> Vector t -> Vector t
 vdrop n xs
     | n >= 0 = V.drop n xs
     | otherwise = V.replicate (-n) zeroV V.++ xs
 
 -- Try to take n knots, but if there aren't enough, increase the multiplicity of the last knot
+stakeKnots :: (Num k, Ord k) => Int -> Knots k -> Knots k
 stakeKnots n kts
     | n <= nKts = takeKnots n kts
     | otherwise = case maxKnot kts of
@@ -121,6 +152,7 @@ stakeKnots n kts
     where nKts = numKnots kts
 
 -- Try to drop n knots, but if n is negative, increase the multiplicity of the first knot by @abs n@
+sdropKnots :: (Num k, Ord k) => Int -> Knots k -> Knots k
 sdropKnots n kts
     | n >= 0    = dropKnots n kts
     | otherwise = case minKnot kts of

@@ -62,6 +62,8 @@ instance Spline ISpline v => ControlPoints ISpline v where
 toISpline :: (Spline s v, Eq v) => s v -> ISpline v
 toISpline = fromBSpline . toBSpline
 
+fromBSpline :: (Eq v, VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
+    => BSpline v -> ISpline v
 fromBSpline spline
     | V.head ds == zeroV 
     && numKnots ks >= 2 = iSpline (mkKnots (init (tail ts))) (V.tail ds')

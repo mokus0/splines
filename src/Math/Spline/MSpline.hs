@@ -46,6 +46,7 @@ mSpline kts cps
         n = V.length cps
         m = numKnots kts - 1
 
+spans :: Int -> V.Vector a -> V.Vector (a,a)
 spans n xs = V.zip xs (V.drop n xs)
 
 instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline MSpline v where
@@ -63,6 +64,8 @@ instance Spline MSpline v => ControlPoints MSpline v where
 toMSpline :: Spline s v => s v -> MSpline v
 toMSpline = fromBSpline . toBSpline
 
+fromBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
+    => BSpline v -> MSpline v
 fromBSpline spline = mSpline ks cs
     where
         n = splineDegree spline + 1; n' = fromIntegral n

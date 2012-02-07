@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, StandaloneDeriving, FlexibleContexts, UndecidableInstances, TypeFamilies, ParallelListComp #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, TypeFamilies, ParallelListComp #-}
 module Math.Spline.BSpline
     ( BSpline
     , bSpline
@@ -34,16 +34,6 @@ maybeSpline kts cps
         n = V.length cps
         m = numKnots kts - 1
 
-deriving instance (Eq   (Scalar v), Eq   v) => Eq   (BSpline v)
-deriving instance (Ord  (Scalar v), Ord  v) => Ord  (BSpline v)
-instance (Show (Scalar v), Show v) => Show (BSpline v) where
-    showsPrec p (Spline _ kts cps) = showParen (p>10) 
-        ( showString "bSpline "
-        . showsPrec 11 kts
-        . showChar ' '
-        . showsPrec 11 cps
-        )
-
 differentiateBSpline
   :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
 differentiateBSpline spline
@@ -70,12 +60,13 @@ integrateBSpline spline = bSpline (mkKnots ts') (V.scanl (^+^) zeroV ds')
         p = degree spline + 1
         cs = V.fromList [(t1 - t0) / fromIntegral p | (t0,t1) <- spans p ts]
 
+spans :: Int -> [a] -> [(a,a)]
 spans n xs = zip xs (drop n xs)
 
 splitBSpline
   :: (VectorSpace v, Ord (Scalar v), Fractional (Scalar v)) =>
      BSpline v -> Scalar v -> Maybe (BSpline v, BSpline v)
-splitBSpline spline@(Spline p kv ds) t 
+splitBSpline spline@(Spline p kv _) t 
     | inDomain  = Just (Spline p (mkKnots us0) ds0, Spline p (mkKnots us1) ds1)
     | otherwise = Nothing
     where

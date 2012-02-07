@@ -24,6 +24,7 @@ source-repository head
 
 Library
   hs-source-dirs:       src
+  ghc-options:          -Wall
   exposed-modules:      Math.Spline
                         Math.Spline.BezierCurve
                         Math.Spline.BSpline
