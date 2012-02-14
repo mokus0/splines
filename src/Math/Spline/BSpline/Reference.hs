@@ -1,4 +1,5 @@
 {-# LANGUAGE ParallelListComp #-}
+{-# LANGUAGE FlexibleContexts #-}
 -- |Reference implementation of B-Splines; very inefficient but \"obviously\"
 -- correct.
 module Math.Spline.BSpline.Reference
@@ -6,11 +7,19 @@ module Math.Spline.BSpline.Reference
     , basisFunctions
     , basisPolynomials
     , basisPolynomialsAt
+    , evalReferenceBSpline
     ) where
 
+import qualified Data.Vector as V
+import Data.VectorSpace (VectorSpace, Scalar, (*^), sumV)
 import Math.Spline.Knots
+import Math.Spline.BSpline.Internal
 import Math.Polynomial (Poly)
 import qualified Math.Polynomial as Poly
+
+evalReferenceBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
+    => BSpline v -> Scalar v -> v
+evalReferenceBSpline (Spline deg kts cps) x = sumV (zipWith (*^) (bases kts x !! deg) (V.toList cps))
 
 ind :: Num a => Bool -> a
 ind True  = 1

@@ -7,14 +7,12 @@ module Math.Spline.BSpline.Internal
     , mapControlPoints
     , evalBSpline
     , evalNaturalBSpline
-    , evalReferenceBSpline
     , insertKnot
     , deBoor
     , slice
     ) where
 
 import Math.Spline.Knots
-import Math.Spline.BSpline.Reference (bases)
 
 import Data.Monoid
 import Data.Vector as V hiding (slice)
@@ -50,10 +48,6 @@ evalBSpline spline = V.head . P.last . deBoor spline
 evalNaturalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
     => BSpline v -> Scalar v -> v
 evalNaturalBSpline spline x = V.head (P.last (deBoor (slice spline x) x))
-
-evalReferenceBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
-    => BSpline v -> Scalar v -> v
-evalReferenceBSpline (Spline deg kts cps) x = sumV (P.zipWith (*^) (bases kts x !! deg) (V.toList cps))
 
 -- |Insert one knot into a 'BSpline'
 insertKnot
