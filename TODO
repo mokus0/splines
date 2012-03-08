@@ -1,0 +1,5 @@
+Implement slicing for 'extended' evaluation
+Implement tests for existing code
+Finish Hermite spline implementation
+Implement tests for Hermite splines
+Implement piecewise polynomial splines
