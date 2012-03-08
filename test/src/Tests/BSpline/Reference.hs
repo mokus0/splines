@@ -1,8 +1,11 @@
 {-# LANGUAGE ParallelListComp, ExtendedDefaultRules #-}
 module Tests.BSpline.Reference where
 
-import Math.Polynomial (evalPoly)
+import qualified Data.Vector as V
+import Math.Polynomial (evalPoly, polyDegree)
+import Math.Spline (BSpline, controlPoints, knotVector, splineDegree)
 import Math.Spline.BSpline.Reference
+import Math.Spline.BSpline.Arbitrary
 import Math.Spline.Knots
 import Math.Spline.Knots.Arbitrary
 import Test.Framework (testGroup)
@@ -14,6 +17,8 @@ referenceBSplineTests =
     , testGroup "basisFunctions"        basisFunctions_tests
     , testGroup "basisPolynomials"      basisPolynomials_tests
     , testGroup "basisPolynomialsAt"    basisPolynomialsAt_tests
+    , testGroup "evalReferenceBSpline"  evalReferenceBSpline_tests
+    , testGroup "fitPolyToBSplineAt"    fitPolyToBSplineAt_tests
     ]
 
 bases_tests =
@@ -24,36 +29,6 @@ bases_tests =
     , testProperty "partition of unity" (directed_test (prop_bases_partitionOfUnity (~=)))
     , testProperty "spot check"         prop_bases_spotCheck
     ] where x ~= y = (abs (x - y) <= 1e-14)
-
-
--- For all of these tests, we want to make sure certain classes of inputs are
--- tested.  In particular, the knot values themselves should be tested with 
--- some regularity and more testing should be done inside the knot vector than
--- outside.  So, we use this test-driver to focus the tests where we want them.
--- The weights are more or less arbitrary.
--- 
--- The @take (1 + numDistinctKnots kts)@ part is just to limit the cases 
--- considered to those that are possible for the given knot vector
-directed_test test kts = frequency $ take (1 + numDistinctKnots kts)
-        [ (1, everywhere)
-        , (1, atKnots)
-        , (5, onSpans)
-        ]
-    where
-        everywhere = property (test kts)
-        atKnots = forAll (elements (distinctKnots kts)) (test kts)
-        onSpans = forAll (elements (spans (distinctKnots kts)))
-            (\(u0,u1) -> forAll arb01 (property . test kts . lerp u0 u1))
-        
-        spans xs = zip xs (tail xs)
-        lerp x0 x1 a = (1-a) * x0 + a * x1
-        
-        -- I was using @choose (0,1)@ for this, but that didn't work for 
-        -- Rational because it isn't an instance of System.Random.Random.
-        -- Since I don't really care about the quality of the actual 
-        -- distribution, this is a good-enough substitute that uses Arbitrary
-        -- instead of Random.
-        arb01 = do x <- arbitrary; return (x - fromInteger (floor x))
 
 prop_bases_bounded kts x =
     not (null bs) ==> forAll (elements bs) (all inBounds)
@@ -221,3 +196,27 @@ prop_basisPolynomialsAt_equals_bases = do
     x <- arbitrary
     return ((bases kts x :: [[Rational]])
         == [[evalPoly f x | f <- basis] | basis <- basisPolynomialsAt kts x])
+
+
+evalReferenceBSpline_tests =
+    [ testProperty "definition" prop_evalReferenceBSpline_definition
+    ]
+
+prop_evalReferenceBSpline_definition :: BSpline Rational -> Rational -> Bool
+prop_evalReferenceBSpline_definition f x
+    =  evalReferenceBSpline f x
+    == sum (zipWith (*) (V.toList (controlPoints f)) (bases (knotVector f) x !! splineDegree f))
+
+fitPolyToBSplineAt_tests =
+    [ testProperty "preserves degree"           prop_fitPolyToBSplineAt_degree
+    , testProperty "evaluates to same value"    prop_fitPolyToBSplineAt_eval
+    ]
+
+prop_fitPolyToBSplineAt_degree :: SplineAndPoint BSpline Rational -> Bool
+prop_fitPolyToBSplineAt_degree (SplineAndPoint f x) =
+    polyDegree (fitPolyToBSplineAt f x) <= splineDegree f
+
+prop_fitPolyToBSplineAt_eval :: SplineAndPoint BSpline Rational -> Bool
+prop_fitPolyToBSplineAt_eval (SplineAndPoint f x)
+    =  evalPoly (fitPolyToBSplineAt f x) x
+    == evalReferenceBSpline f x

@@ -4,6 +4,9 @@ module Math.Spline.Knots.Arbitrary
     , Smaller(..), smaller
     , KnotList(..)
     , KnotMap(..)
+    , directed_test
+    , arb01  -- TODO: move this to a general-purpose "support" module...
+             -- probably also specialize it for choosing from a specified range
     ) where
 
 import Control.Monad
@@ -41,8 +44,8 @@ instance (Arbitrary a, Ord a) => Arbitrary (KnotMap a) where
 
 instance (Arbitrary a, Ord a) => Arbitrary (Knots a) where
     arbitrary = sized $ \sz -> do
-        nKts <- choose (0,sz)
-        let maxM = sz `div` nKts
+        nKts <- choose (0, max 1 sz)
+        let maxM = max 1 ((sz + nKts - 1) `div` nKts)
         kts <- replicateM nKts $ do
             x <- arbitrary
             m <- choose (1, maxM)
@@ -56,5 +59,43 @@ smaller (Smaller x) = x
 
 instance Arbitrary a => Arbitrary (Smaller a) where
     arbitrary = sized $ \sz -> do
-        x <- resize (sz `div` 2) arbitrary
+        x <- resize ((sz * 2) `div` 3) arbitrary
         return (Smaller x)
+
+-- For many tests, we want to make sure certain classes of inputs are
+-- tested.  In particular, the knot values themselves should be tested with 
+-- some regularity and more testing should be done inside the knot vector than
+-- outside.  So, we use this test-driver to focus the tests where we want them.
+-- The weights are more or less arbitrary.
+-- 
+-- The @take (1 + numDistinctKnots kts)@ part is just to limit the cases 
+-- considered to those that are possible for the given knot vector
+directed_test test kts = frequency $ take (1 + numDistinctKnots kts)
+        [ (1, everywhere)
+        , (1, atKnots)
+        , (5, onSpans)
+        ]
+    where
+        everywhere = property (test kts)
+        atKnots = forAll (elements (distinctKnots kts)) (test kts)
+        onSpans = forAll (elements (spans (distinctKnots kts)))
+            (\(u0,u1) -> forAll arb01 (property . test kts . lerp u0 u1))
+        
+        spans xs = zip xs (tail xs)
+        lerp x0 x1 a = (1-a) * x0 + a * x1
+
+-- Pick an arbitrary value x in the range 0 <= x <= 1
+-- I was using @choose (0,1)@ for this, but that didn't work for 
+-- Rational because it isn't an instance of System.Random.Random.
+-- Since I don't really care about the quality of the actual 
+-- distribution, this is a good-enough substitute that uses Arbitrary
+-- instead of Random.
+arb01 :: (Arbitrary a, RealFrac a) => Gen a
+arb01 = do
+    x <- arbitrary;
+    let xI    = floor x
+        iPart = fromInteger xI
+    return $! if iPart == x
+        then if even xI then 0 else 1
+        else x - iPart
+

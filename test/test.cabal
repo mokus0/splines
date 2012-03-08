@@ -24,4 +24,5 @@ Executable splines-test
                         test-framework,
                         test-framework-quickcheck2,
                         QuickCheck >= 2,
+                        vector,
                         vector-space

@@ -43,7 +43,9 @@ mapControlPoints f spline = spline
 
 evalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
      => BSpline v -> Scalar v -> v
-evalBSpline spline = V.head . P.last . deBoor spline
+evalBSpline spline
+     | V.null (controlPoints spline) = zeroV
+     | otherwise = V.head . P.last . deBoor spline
 
 evalNaturalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
     => BSpline v -> Scalar v -> v

@@ -21,12 +21,11 @@ import qualified Data.Vector as V
 -- number of spans in the knot vector (@numKnots kts - 1@) and the number of 
 -- control points (@length cps@).
 bSpline :: Knots (Scalar a) -> V.Vector a -> BSpline a
-bSpline kts cps
-    | V.null cps    = error "bSpline: no control points"
-    | otherwise     = fromMaybe
-        (error "bSpline: too few knots")
-        (maybeSpline kts cps)
+bSpline kts cps = fromMaybe
+    (error "bSpline: too few knots")
+    (maybeSpline kts cps)
 
+-- not exported; precondition: n > 0
 maybeSpline :: Knots (Scalar a) -> V.Vector a -> Maybe (BSpline a)
 maybeSpline kts cps 
     | n > m     = Nothing
@@ -38,10 +37,14 @@ maybeSpline kts cps
 differentiateBSpline
   :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
 differentiateBSpline spline
-    | numKnots ks  < 2  = spline
-    | numKnots ks == 2  = bSpline ks (V.singleton zeroV)
-    | otherwise         = bSpline ks' ds'
+    | V.null ds = error "differentiateBSpline: no control points"
+    | m  < 1    = spline
+    | p == 0    = bSpline ks (V.replicate n zeroV)
+    | otherwise = bSpline ks' ds'
     where
+        n = V.length ds
+        m = numKnots ks - 1
+        
         ks' = mkKnots . init . tail $ ts
         ds' = V.zipWith (*^) (V.tail cs) (V.zipWith (^-^) (V.tail ds) ds)
         
@@ -49,7 +52,7 @@ differentiateBSpline spline
         ds = controlPoints spline
         
         p  = degree spline
-        cs = V.fromList [fromIntegral p / (t1 - t0) | (t0,t1) <- spans p ts]
+        cs = V.fromList [ if t1 /= t0 then fromIntegral p / (t1 - t0) else 0 | (t0,t1) <- spans p ts]
 
 integrateBSpline
   :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => BSpline v -> BSpline v
