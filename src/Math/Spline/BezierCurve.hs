@@ -9,7 +9,7 @@ import Math.Spline.Class
 import Math.Spline.Knots
 
 import Control.Applicative
-import qualified Data.Vector as V
+import qualified Data.Vector.Safe as V
 import Data.VectorSpace
 
 -- |A BezierCurve curve on @0 <= x <= 1@.

@@ -12,7 +12,7 @@ module Math.Spline.ISpline
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
-import qualified Data.Vector as V
+import qualified Data.Vector.Safe as V
 import Data.VectorSpace
 
 -- |The I-Spline basis functions are the integrals of the M-splines, or

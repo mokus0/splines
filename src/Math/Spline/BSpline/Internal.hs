@@ -15,7 +15,7 @@ module Math.Spline.BSpline.Internal
 import Math.Spline.Knots
 
 import Data.Monoid
-import Data.Vector as V hiding (slice)
+import Data.Vector.Safe as V hiding (slice)
 import Data.VectorSpace
 import Prelude as P
 

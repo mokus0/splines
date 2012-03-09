@@ -7,7 +7,7 @@ module Math.NURBS
     , splitNURBS
     ) where
 
-import qualified Data.Vector as V
+import qualified Data.Vector.Safe as V
 import Data.VectorSpace hiding (project)
 import Math.Spline.Class (Spline, toBSpline)
 import Math.Spline.BSpline.Internal

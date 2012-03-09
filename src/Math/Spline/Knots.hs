@@ -46,7 +46,7 @@ import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S (Set)
-import qualified Data.Vector as V
+import qualified Data.Vector.Safe as V
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
 data Knots a = Knots !Int (M.Map a Int) deriving (Eq, Ord)

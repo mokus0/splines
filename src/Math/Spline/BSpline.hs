@@ -14,7 +14,7 @@ import Math.Spline.BSpline.Internal
 
 import Data.Maybe (fromMaybe)
 import Data.VectorSpace
-import qualified Data.Vector as V
+import qualified Data.Vector.Safe as V
 
 -- |@bSpline kts cps@ creates a B-spline with the given knot vector and control 
 -- points.  The degree is automatically inferred as the difference between the 
