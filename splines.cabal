@@ -1,5 +1,5 @@
 name:                   splines
-version:                0.3
+version:                0.4
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -30,6 +30,7 @@ Library
                         Math.Spline.BSpline
                         Math.Spline.BSpline.Reference
                         Math.Spline.Class
+                        Math.Spline.Hermite
                         Math.Spline.ISpline
                         Math.Spline.Knots
                         Math.Spline.MSpline
