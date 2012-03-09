@@ -19,7 +19,7 @@ import Data.VectorSpace
 
 -- | Cubic Hermite splines.  These are cubic splines defined by a 
 -- sequence of control points and derivatives at those points.
-data CSpline a = CSpline [(Scalar a,a,a)]
+newtype CSpline a = CSpline [(Scalar a,a,a)]
 
 -- | Cubic splines specified by a list of control points, 
 -- where each control point is given by a triple of parameter value, 
