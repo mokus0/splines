@@ -19,6 +19,7 @@ import Data.Vector.Safe as V hiding (slice)
 import Data.VectorSpace
 import Prelude as P
 
+-- | A B-spline, defined by a knot vector (see 'Knots') and a sequence of control points.
 data BSpline t = Spline
     { degree        :: !Int
     , knotVector    :: Knots (Scalar t)
@@ -41,17 +42,29 @@ mapControlPoints f spline = spline
     , knotVector = knotVector spline
     }
 
+-- |Evaluate a B-spline at the given point.  This uses a slightly modified version of 
+-- de Boor's algorithm which is only strictly correct inside the domain of the spline.
+-- Unlike the standard algorithm, the basis functions always sum to 1, even outside the
+-- domain of the spline.  This is mainly useful for \"clamped\" splines - the values at
+-- or outside the endpoints will always be the value of the nearest control point.
+--
+-- For a standard implementation of de Boor's algorithm, see 'evalNaturalBSpline'.
+-- For a (much slower) strictly mathematically correct evaluation, see 'evalReferenceBSpline'.
 evalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
      => BSpline v -> Scalar v -> v
 evalBSpline spline
      | V.null (controlPoints spline) = zeroV
      | otherwise = V.head . P.last . deBoor spline
 
+-- | Evaluate a B-spline at the given point.  This uses de Boor's algorithm, which is 
+-- only strictly correct inside the domain of the spline.
+-- 
+-- For a (much slower) strictly mathematically correct evaluation, see 'evalReferenceBSpline'.
 evalNaturalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
     => BSpline v -> Scalar v -> v
 evalNaturalBSpline spline x = V.head (P.last (deBoor (slice spline x) x))
 
--- |Insert one knot into a 'BSpline'
+-- |Insert one knot into a 'BSpline' without changing the spline's shape.
 insertKnot
   :: (VectorSpace a, Ord (Scalar a), Fractional (Scalar a)) =>
      BSpline a -> Scalar a -> BSpline a
@@ -71,7 +84,7 @@ extend vec
     | V.null vec    = V.empty
     | otherwise     = V.cons (V.head vec) (V.snoc vec (V.last vec))
 
--- The table from de Boor's algorithm, calculated for the entire spline.  If that is not necessary
+-- | The table from de Boor's algorithm, calculated for the entire spline.  If that is not necessary
 -- (for example, if you are only evaluating the spline), then use 'slice' on the spline first.
 -- 'splitBSpline' currently uses the whole table.  It is probably not necessary there, but it 
 -- greatly simplifies the definition and makes the similarity to splitting Bezier curves very obvious.
@@ -107,7 +120,7 @@ interp x x0 x1 y0 y1
         a = (x - x0) / (x1 - x0)
 
 -- "slice" a spline to contain only those knots and control points that 
--- actually influence the value at 'x'
+-- actually influence the value at 'x'.
 --
 -- It should be true for any valid BSpline that:
 -- degree (slice f x) == degree f

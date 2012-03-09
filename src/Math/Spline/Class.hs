@@ -32,6 +32,7 @@ class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     
     toBSpline :: s v -> BSpline.BSpline v
 
+-- TODO: this class should probably go away.  all it really does is overload something that doesn't really have any implementation-independent semantics (or does it?).
 class Spline s v => ControlPoints s v where
     controlPoints :: s v -> V.Vector v
 

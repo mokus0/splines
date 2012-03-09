@@ -19,11 +19,18 @@ import Math.Spline.BSpline.Internal
 import Math.Polynomial (Poly)
 import qualified Math.Polynomial as Poly
 
+-- | This is a fairly slow function which computes the value of a B-spline at a given point,
+-- using the mathematical definition of B-splines.  It is mainly for testing purposes, as a
+-- reference against which the other evaluation functions are checked.
 evalReferenceBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
     => BSpline v -> Scalar v -> v
 evalReferenceBSpline (Spline deg kts cps) x =
     sumV (zipWith (^*) (V.toList cps) (bases kts x !! deg))
 
+-- | This is a fairly slow function which computes one polynomial segment of a B-spline (the 
+-- one containing the given point), using the mathematical definition of B-splines.  It is 
+-- mainly for testing purposes, as a reference against which the other evaluation functions
+-- are checked.
 fitPolyToBSplineAt :: (Fractional a, Ord a, Scalar a ~ a)
     => BSpline a -> a -> Poly a
 fitPolyToBSplineAt (Spline deg kts cps) x = 
@@ -33,6 +40,8 @@ ind :: Num a => Bool -> a
 ind True  = 1
 ind False = 0
 
+-- | The values of all the B-spline basis functions for the given knot vector at the given
+-- point, ordered by degree; \"b_{i,j}(x)\" is @bases kts x !! i !! j@.
 bases :: (Fractional a, Ord a) => Knots a -> a -> [[a]]
 bases kts x = coxDeBoor interp initial kts
     where
@@ -44,8 +53,8 @@ bases kts x = coxDeBoor interp initial kts
             = (if d0 == 0 then 0 else (x       - t_j) / d0) * b_nm1_j
             + (if d1 == 0 then 0 else (t_jpnp1 -   x) / d1) * b_nm1_jp1
 
--- Alternate version constructing table of functions rather than computing
--- table of values
+-- | All the B-spline basis functions for the given knot vector at the given
+-- point, ordered by degree; \"b_{i,j}\" is @basisFunctions kts x !! i !! j@.
 basisFunctions :: (Fractional a, Ord a) => Knots a -> [[a -> a]]
 basisFunctions kts = coxDeBoor interp initial kts
     where
@@ -57,13 +66,15 @@ basisFunctions kts = coxDeBoor interp initial kts
             = (if d0 == 0 then 0 else (x       - t_j) / d0) * b_nm1_j   x
             + (if d1 == 0 then 0 else (t_jpnp1 -   x) / d1) * b_nm1_jp1 x
 
--- compute all the basis polynomials for a knot vector, ordered by knot span.
+-- | All the B-spline basis polynomials for the given knot vector, ordered first 
+-- by knot span and then by degree.
 basisPolynomials :: (Fractional a, Ord a) => Knots a -> [[[Poly a]]]
 basisPolynomials kts
     | isEmpty kts   = []
     | otherwise     = [basisPolynomialsAt kts kt | kt <- init (distinctKnots kts)]
 
--- compute all the basis polynomials for the knot span containing a given location.
+-- | All the B-spline basis polynomials for the given knot vector at the given
+-- point, ordered by degree; \"b_{i,j}\" is @basisPolynomialsAt kts x !! i !! j@.
 basisPolynomialsAt :: (Fractional a, Ord a) => Knots a -> a -> [[Poly a]]
 basisPolynomialsAt kts x = coxDeBoor interp initial kts
     where
@@ -86,7 +97,7 @@ basisPolynomialsAt kts x = coxDeBoor interp initial kts
                 p ^*^ q   = Poly.multPoly p q
                 p ^/  s   = Poly.scalePoly (recip s) p
 
--- This is a straightforward implementation of the Cox-De Boor recursion scheme
+-- | This is a straightforward implementation of the Cox-De Boor recursion scheme
 -- generalized in a slightly strange way; the initial vector is a parameter 
 -- and the actual computation of the recursion step is a function parameter.
 -- The purpose is to allow the same recursion to be applied when computing basis

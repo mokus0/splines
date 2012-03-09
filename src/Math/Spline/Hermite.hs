@@ -5,12 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Math.Spline.Hermite
     ( CSpline, cSpline
-    
-    , h00, h10, h01, h11
-    , hermitePoly
-    
-    , evalHermite
-    , evalCSpline
+    , evalSpline
     ) where
 
 import Data.List
@@ -22,6 +17,8 @@ import Math.Spline.Knots
 import qualified Data.Vector.Safe as V
 import Data.VectorSpace
 
+-- | Cubic Hermite splines.  These are cubic splines defined by a 
+-- sequence of control points and derivatives at those points.
 data CSpline a = CSpline [(Scalar a,a,a)]
 
 -- | Cubic splines specified by a list of control points, 
@@ -38,14 +35,6 @@ h10 = poly BE [ 1,-2, 1, 0]
 h01 = poly BE [-2, 3, 0, 0]
 h11 = poly BE [ 1,-1, 0, 0]
 
-hermitePoly :: (Eq a, Num a) => a -> a -> a -> a -> Poly a
-hermitePoly y0 m0 y1 m1 = sumPolys
-    [ scalePoly p h
-    | p <- [ y0,  m0,  y1,  m1]
-    | h <- [h00, h10, h01, h11]
-    ]
-
--- | @'evalHermite' y0 m0 y1 m1 x == 'evalPoly' ('hermitePoly' y0 m0 y1 m1) x@
 evalHermite
   :: (Eq (Scalar v), Num (Scalar v), VectorSpace v) =>
      v -> v -> v -> v -> Scalar v -> v

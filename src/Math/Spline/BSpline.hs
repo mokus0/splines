@@ -67,6 +67,9 @@ integrateBSpline spline = bSpline (mkKnots ts') (V.scanl (^+^) zeroV ds')
 spans :: Int -> [a] -> [(a,a)]
 spans n xs = zip xs (drop n xs)
 
+-- |Split a B-spline at the specified point (which must be inside the spline's domain),
+-- returning two disjoint splines, the sum of which is equal to the original.  The domain
+-- of the first will be below the split point and the domain of the second will be above.
 splitBSpline
   :: (VectorSpace v, Ord (Scalar v), Fractional (Scalar v)) =>
      BSpline v -> Scalar v -> Maybe (BSpline v, BSpline v)

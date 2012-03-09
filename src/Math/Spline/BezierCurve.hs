@@ -12,7 +12,7 @@ import Control.Applicative
 import qualified Data.Vector.Safe as V
 import Data.VectorSpace
 
--- |A BezierCurve curve on @0 <= x <= 1@.
+-- |A Bezier curve on @0 <= x <= 1@.
 data BezierCurve t = BezierCurve !Int !(V.Vector t) deriving (Eq, Ord)
 
 -- |Construct a Bezier curve from a list of control points.  The degree
