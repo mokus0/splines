@@ -27,6 +27,9 @@ intervalPoly = map f $ zip3 dkts (tail dkts) (basisPolynomials kts)
 applyDeBoor :: Double -> Double
 applyDeBoor = evalBSpline spline
 
+applyNaturalDeBoor :: Double -> Double
+applyNaturalDeBoor = evalNaturalBSpline spline
+
 applyPoly :: Double -> Double
 applyPoly x = maybe 0 (\(_,_,p) -> evalPoly p x) $ find (\(b,e,_) -> x >= b && x < e) intervalPoly
 
@@ -36,6 +39,8 @@ applyAndSum f = sum . map f
 main = defaultMain
        [ bench "deBoor 1000" $ whnf (applyAndSum applyDeBoor) [0,0.01..10]
        , bench "deBoor 10000" $ whnf (applyAndSum applyDeBoor) [0,0.001..10]
+       , bench "natural 1000" $ whnf (applyAndSum applyNaturalDeBoor) [0,0.01..10]
+       , bench "natural 10000" $ whnf (applyAndSum applyNaturalDeBoor) [0,0.001..10]
        , bench "poly 1000" $ whnf (applyAndSum applyPoly) [0,0.01..10]
        , bench "poly 10000" $ whnf (applyAndSum applyPoly) [0,0.001..10]
        ]
