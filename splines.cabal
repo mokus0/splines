@@ -2,7 +2,7 @@ name:                   splines
 version:                0.4
 stability:              provisional
 
-cabal-version:          >= 1.6
+cabal-version:          >= 1.9.2
 build-type:             Simple
 
 author:                 James Cook <mokus@deepbondi.net>
@@ -41,3 +41,29 @@ Library
                         polynomial,
                         vector,
                         vector-space
+
+Test-Suite splines-test
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       test
+  main-is:              Main.hs
+  
+  build-depends:        base >= 3 && <5,
+                        containers,
+                        polynomial,
+                        splines,
+                        test-framework,
+                        test-framework-quickcheck2,
+                        QuickCheck >= 2,
+                        vector,
+                        vector-space
+
+Benchmark splines-bench
+  type:                 exitcode-stdio-1.0
+  hs-source-dirs:       benchmark
+  main-is:              DeBoor.hs
+  
+  build-depends:        base >= 3 && < 5,
+                        criterion,
+                        polynomial,
+                        splines,
+                        vector
