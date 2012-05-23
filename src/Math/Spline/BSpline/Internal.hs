@@ -127,6 +127,7 @@ interp x x0 x1 y0 y1
 -- slice (slice f x) x == slice f x
 -- {x in domain of f} => {x in domain of slice f x}
 -- {x in domain of f} => evalBSpline (slice f x) x == evalBSpline f x
+{-# INLINE slice #-}
 slice :: (Num (Scalar v), Ord (Scalar v), AdditiveGroup v)
      => BSpline v -> Scalar v -> BSpline v
 slice spline x = spline
