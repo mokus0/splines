@@ -40,23 +40,21 @@ module Math.Spline.Knots
     ) where
 
 import Prelude hiding (sum, maximum)
+import Control.Arrow
 import Control.Monad (guard)
 import Data.Foldable (Foldable(foldMap), sum, maximum)
+import Data.List (sortBy, sort)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Maybe (fromMaybe)
-import qualified Data.Set as S (Set)
+import Data.Ord
+import qualified Data.Set as S (Set, fromAscList, toAscList)
 import qualified Data.Vector.Safe as V
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
-data Knots a = Knots !Int (M.Map a Int) deriving (Eq, Ord)
+data Knots a = Knots !(V.Vector a) deriving (Eq, Ord)
 
 instance Show a => Show (Knots a) where
-    showsPrec _    (Knots 0 _) = showString "empty"
-    showsPrec p ks@(Knots 1 _) = showParen (p > 10)
-        ( showString "knot "
-        . showsPrec 11 (head $ knots ks)
-        )
     showsPrec p ks = showParen (p > 10)
         ( showString "mkKnots "
         . showsPrec 11 (knots ks)
@@ -64,8 +62,8 @@ instance Show a => Show (Knots a) where
 
 instance (Ord a) => Monoid (Knots a) where
     mempty = empty
-    mappend (Knots n1 v1) (Knots n2 v2) =
-        Knots (n1 + n2) (M.filter (/=0) (M.unionWith (+) v1 v2))
+    mappend (Knots v1) (Knots v2) =
+      Knots . V.fromList . sort . V.toList $ v1 V.++ v2
 
 instance Foldable Knots where
     foldMap f = foldMap f . knots
@@ -73,11 +71,10 @@ instance Foldable Knots where
 
 -- |An empty knot vector
 empty :: Knots a
-empty = Knots 0 M.empty
+empty = Knots V.empty
 
 isEmpty :: Knots a -> Bool
-isEmpty (Knots 0 _) = True
-isEmpty  _          = False
+isEmpty (Knots v) = V.null v
 
 -- |Create a knot vector consisting of one knot.
 knot :: Ord a => a -> Knots a
@@ -85,79 +82,72 @@ knot x = multipleKnot x 1
 
 -- |Create a knot vector consisting of one knot with the specified multiplicity.
 multipleKnot :: Ord a => a -> Int -> Knots a
-multipleKnot k n 
-    | n <= 0    = Knots 0 (M.empty)
-    | otherwise = Knots n (M.singleton k n)
+multipleKnot k n = Knots $ V.replicate n k
 
 -- |Create a knot vector consisting of all the knots in a list.
 mkKnots :: (Ord a) => [a] -> Knots a
-mkKnots ks = fromList (map (\k -> (k,1)) ks)
+mkKnots = Knots . V.fromList . sort
 
 -- |Create a knot vector consisting of all the knots and corresponding 
 -- multiplicities in a list.
 fromList :: (Ord k) => [(k, Int)] -> Knots k
-fromList ks = Knots (sum kMap) kMap
-    where kMap = M.fromListWith (+) (filter ((>0).snd) ks)
+fromList ks = Knots v
+    where v = V.concat . map (\(k, mult) -> V.replicate mult k) .
+              sortBy (comparing fst) $ filter ((>0).snd) ks
 
 -- |Create a knot vector consisting of all the knots and corresponding 
 -- multiplicities in a list ordered by the knots' 'Ord' instance.  The
 -- ordering precondition is not checked.
 fromAscList :: Eq k => [(k, Int)] -> Knots k
-fromAscList ks = Knots (sum kMap) kMap
-    where kMap = M.fromAscListWith (+) (filter ((>0).snd) ks)
+fromAscList ks = Knots v
+    where v = V.concat . map (\(k, mult) -> V.replicate mult k)
+                 $ filter ((>0).snd) ks
 
 -- |Create a knot vector consisting of all the knots and corresponding 
 -- multiplicities in a list ordered by the knots' 'Ord' instance with no
 -- duplicates.  The preconditions are not checked.
-fromDistinctAscList :: [(k, Int)] -> Knots k
-fromDistinctAscList ks = Knots (sum kMap) kMap
-    where kMap = M.fromDistinctAscList (filter ((>0).snd) ks)
+fromDistinctAscList :: Eq k => [(k, Int)] -> Knots k
+fromDistinctAscList = fromAscList
 
-fromMap :: M.Map k Int -> Knots k
-fromMap ks = Knots (sum kMap) kMap
-    where
-        kMap = mFilter (>0) ks
-        -- filter is monotonic, I have no idea why M.filter requires Ord on the key
-        mFilter p = M.fromDistinctAscList . filter (p.snd) . M.toAscList
+fromMap :: Eq k => M.Map k Int -> Knots k
+fromMap = fromAscList . M.toAscList
 
 fromVector :: Ord k => V.Vector (k,Int) -> Knots k
 fromVector = fromList . V.toList
 
 -- |Returns a list of all distinct knots in ascending order along with
 -- their multiplicities.
-toList :: Knots k -> [(k, Int)]
+toList :: Ord k => Knots k -> [(k, Int)]
 toList = M.toList . toMap
 
-toVector :: Knots k -> V.Vector (k, Int)
+toVector :: Ord k => Knots k -> V.Vector (k, Int)
 toVector = V.fromList . toList
 
-toMap :: Knots k -> M.Map k Int
-toMap (Knots _ ks) = ks
+toMap :: Ord k => Knots k -> M.Map k Int
+toMap (Knots v) = V.foldl' (\m u -> M.insertWith (+) u 1 m) M.empty v
 
 -- |Returns the number of knots (not necessarily distinct) in a knot vector.
 numKnots :: Knots t -> Int
-numKnots (Knots n _) = n
+numKnots (Knots v) = V.length v
 
 -- |Returns the number of distinct knots in a knot vector.
-numDistinctKnots :: Knots t -> Int
-numDistinctKnots (Knots _ ks) = M.size ks
+numDistinctKnots :: Eq t => Knots t -> Int
+numDistinctKnots kts = numKnots $ Knots $ distinctKnotsVector kts
 
-maxMultiplicity :: Knots t -> Int
-maxMultiplicity (Knots 0  _) = 0
-maxMultiplicity (Knots _ ks) = maximum ks
+maxMultiplicity :: Ord t => Knots t -> Int
+maxMultiplicity kts@(Knots v)
+    | V.length v == 0 = 0
+    | otherwise = maximum $ toMap kts
 
 lookupKnot :: Int -> Knots a -> Maybe a
 lookupKnot k kts
     | k < 0             = Nothing
-    | k < numKnots kts  = fmap fst mbKt
+    | k < numKnots kts  = mbKt
     | otherwise         = Nothing
     where (_, mbKt, _) = splitLookup k kts
 
-lookupDistinctKnot :: Int -> Knots a -> Maybe a
-lookupDistinctKnot k (Knots _ ks)
-    | k < 0         = Nothing
-    | k < M.size ks = Just (fst (M.elemAt k ks))
-    | otherwise     = Nothing
+lookupDistinctKnot :: Eq a => Int -> Knots a -> Maybe a
+lookupDistinctKnot k kts = lookupKnot k . Knots $ distinctKnotsVector kts
 
 -- |@splitLookup n kts@: Split a knot vector @kts@ into 3 parts @(pre, mbKt, post)@
 -- such that:
@@ -167,25 +157,12 @@ lookupDistinctKnot k (Knots _ ks)
 --  * Putting the 3 parts back together yields exactly the original knot vector
 --  * The @n@'th knot, if one exists, will be in @mbKt@ along with its multiplicity
 --
-splitLookup :: Int -> Knots a -> (Knots a, Maybe (a, Int), Knots a)
-splitLookup k (Knots n ks) = scan 0 M.empty n ks
-    where
-        -- The general plan: iteratively pull the smallest knot out of "post",
-        -- either moving it to "pre" or terminating by returning it along with
-        -- current values of "pre" and "post"
-        
-        -- invariants:
-        --   nPre  = sum pre
-        --   nPost = sum post
-        --   M.union pre post = ks
-        --   every key in pre < every key in post
-        scan nPre pre nPost post
-            | nPost <= 0    = (Knots nPre  pre, Nothing, Knots nPost post)
-            | nPre + m > k  = (Knots nPre  pre, Just kt, Knots nNewPost newPost)
-            | otherwise     = scan (nPre + m) (pre `ascSnoc` kt) nNewPost newPost
-            where
-                Just (kt@(_,m), newPost)  = M.minViewWithKey post
-                nNewPost = nPost - m
+splitLookup :: Int -> Knots a -> (Knots a, Maybe a, Knots a)
+splitLookup k (Knots v)
+    | V.null gt = (Knots lt, Nothing, Knots V.empty)
+    | otherwise = (Knots lt, Just $ V.head gt, Knots $ V.tail gt)
+  where
+    (lt, gt) = V.splitAt k v
 
 -- Prepend or append an element to a map, without checking the precondition
 -- that the new pair's key is less than (greater than, resp.) all keys in 
@@ -200,104 +177,76 @@ ascSnoc m x = M.fromDistinctAscList (M.toAscList m ++ [x])
 -- precondition that the new knot's location is less than (greater than,
 -- resp.) all knots in the vector.
 ascConsKnot :: (k, Int) -> Knots k -> Knots k
-ascConsKnot (_,0) kts = kts
-ascConsKnot kt@(_,m) (Knots n ks) = Knots (n+m) (kt `ascCons` ks)
+ascConsKnot (k, m) (Knots v) = Knots $ (V.replicate m k) V.++ v
 
 ascSnocKnot :: Knots k -> (k, Int) -> Knots k
-ascSnocKnot kts (_,0) = kts
-ascSnocKnot (Knots n ks) kt@(_,m) = Knots (n+m) (ks `ascSnoc` kt)
+ascSnocKnot (Knots v) (k, m) = Knots $ v V.++ (V.replicate m k)
+
 
 clamp :: Ord a => a -> a -> a -> a
 clamp lo hi = max lo . min hi
 
 dropKnots :: Int -> Knots a -> Knots a
-dropKnots k kts = fromMaybe post $ do
-        (x,xAvail) <- mbKt
-        let xWanted = numKnots kts - (numKnots post + k)
-        
-        return ((x, clamp 0 xAvail xWanted) `ascConsKnot` post)
-    where
-        (_, mbKt, post) = splitLookup k kts
+dropKnots k (Knots v) = Knots $ V.drop k v
 
 takeKnots :: Int -> Knots a -> Knots a
-takeKnots k kts = fromMaybe pre $ do
-        (x,xAvail) <- mbKt
-        let xWanted = k - numKnots pre
-    
-        return (pre `ascSnocKnot` (x, clamp 0 xAvail xWanted))
-    where
-        (pre, mbKt, _) = splitLookup k kts
+takeKnots k (Knots v) = Knots $ V.take k v
 
 splitKnotsAt :: Int -> Knots a -> (Knots a, Knots a)
-splitKnotsAt k kts = fromMaybe (pre, post) $ do
-        (x,xAvail) <- mbKt
-        let xWanted = k - numKnots pre
-            xTaken = clamp 0 xAvail xWanted
-    
-        return ( pre `ascSnocKnot` (x,xTaken)
-               , (x, xAvail - xTaken) `ascConsKnot` post
-               )
-    where
-        (pre, mbKt, post) = splitLookup k kts
+splitKnotsAt k (Knots v) = Knots *** Knots $ V.splitAt k v
 
-takeDistinctKnots :: Int -> Knots a -> Knots a
-takeDistinctKnots k (Knots _ ks) = Knots (sum kMap) kMap
-    where
-        kMap = M.fromDistinctAscList (take k (M.toAscList ks))
+takeDistinctKnots :: (Ord a, Eq a) => Int -> Knots a -> Knots a
+takeDistinctKnots k kts = fromDistinctAscList . take k $ toList kts
 
-dropDistinctKnots :: Int -> Knots a -> Knots a
-dropDistinctKnots k (Knots _ ks) = Knots (sum kMap) kMap
-    where
-        kMap = M.fromDistinctAscList (drop k (M.toAscList ks))
+dropDistinctKnots :: Ord a => Int -> Knots a -> Knots a
+dropDistinctKnots k kts = fromDistinctAscList . drop k $ toList kts
 
-splitDistinctKnotsAt :: Int -> Knots a -> (Knots a, Knots a)
-splitDistinctKnotsAt k (Knots n ks) = (Knots sz1 kMap1, Knots (n - sz1) kMap2)
-    where
-        (ks1, ks2) = splitAt k (M.toAscList ks)
-        kMap1 = M.fromDistinctAscList ks1
-        kMap2 = M.fromDistinctAscList ks2
-        sz1   = sum kMap1
+splitDistinctKnotsAt :: (Ord a, Eq a) => Int -> Knots a -> (Knots a, Knots a)
+splitDistinctKnotsAt k kts = fromAscList *** fromAscList $ splitAt k (toList kts)
 
 -- |Returns a list of all knots (not necessarily distinct) of a knot vector in ascending order
 knots :: Knots t -> [t]
-knots (Knots _ ks) = concat [replicate n k | (k,n) <- M.toAscList ks]
+knots = V.toList . knotsVector
 
 -- |Returns a vector of all knots (not necessarily distinct) of a knot vector in ascending order
 knotsVector :: Knots t -> V.Vector t
-knotsVector (Knots _ ks) = V.concat [V.replicate n k | (k,n) <- M.toAscList ks]
+knotsVector (Knots v) = v
 
 -- |Returns a list of all distinct knots of a knot vector in ascending order
-distinctKnots :: Knots t -> [t]
-distinctKnots (Knots _ ks) = M.keys ks
+distinctKnots :: Eq t => Knots t -> [t]
+distinctKnots kts = S.toAscList $ distinctKnotsSet kts
 
 -- |Returns a vector of all distinct knots of a knot vector in ascending order
-distinctKnotsVector :: Knots t -> V.Vector t
+distinctKnotsVector :: Eq t => Knots t -> V.Vector t
 distinctKnotsVector = V.fromList . distinctKnots
 
 -- |Returns a 'S.Set' of all distinct knots of a knot vector
-distinctKnotsSet :: Knots k -> S.Set k
-distinctKnotsSet (Knots _ ks) = M.keysSet ks
+distinctKnotsSet :: Eq k => Knots k -> S.Set k
+distinctKnotsSet (Knots k) = S.fromAscList $ V.toList k
 
 -- |Looks up the multiplicity of a knot (which is 0 if the point is not a knot)
 knotMultiplicity :: (Ord k) => k -> Knots k -> Int
-knotMultiplicity k (Knots _ ks) = fromMaybe 0 (M.lookup k ks)
+knotMultiplicity k (Knots ks) = V.length $ V.elemIndices k ks
 
 -- |Returns a new knot vector with the given knot set to the specified 
 -- multiplicity and all other knots unchanged.
 setKnotMultiplicity :: Ord k => k -> Int -> Knots k -> Knots k
-setKnotMultiplicity k n (Knots m ks)
-    | n <= 0    = Knots (m     - n') (M.delete k ks)
-    | otherwise = Knots (m + n - n') (M.insert k n ks)
-    where
-        n' = knotMultiplicity k (Knots m ks)
+setKnotMultiplicity k n kts@(Knots v)
+    | n <= 0    = Knots (V.filter (/= k) v)
+    | otherwise = Knots $ V.concat [lt, V.replicate n k, gt]
+        where (Knots lt, Knots eq, Knots gt) = splitFind k kts
+
+splitFind :: Ord k => k -> Knots k -> (Knots k, Knots k, Knots k)
+splitFind k kts@(Knots v) = (Knots lt, Knots eq, Knots gt)
+  where
+    (lt, xs) = V.span (<k) v
+    (eq, gt) = V.span (==k) xs
 
 -- |Check the internal consistency of a knot vector
-valid :: Ord k => Knots k -> Bool
-valid (Knots n ks) = and
-    [ M.valid ks
-    , n == sum ks
-    , all (>0) (M.elems ks)
-    ]
+valid :: (Ord k, Num k) => Knots k -> Bool
+valid (Knots v)
+    | V.null v = True
+    | otherwise = V.all (>=0) $ V.zipWith (-) (V.tail v) v
 
 -- |@knotSpan kts i j@ returns the knot span extending from the @i@'th knot
 -- to the @j@'th knot, if  @i <= j@ and both knots exist.
@@ -330,7 +279,7 @@ knotSpans ks w
 -- the basis functions sum to 1, which is only true on this range, and so
 -- this is also precisely the domain on which de Boor's algorithm is valid.
 knotDomain :: Knots a -> Int -> Maybe (a,a)
-knotDomain ks@(Knots n _) p = knotSpan ks p (n-p-1)
+knotDomain ks@(Knots v) p = knotSpan ks p (V.length v-p-1)
 
 -- |@uniform deg nPts (lo,hi)@ constructs a uniformly-spaced knot vector over
 -- the interval from @lo@ to @hi@ which, when used to construct a B-spline 
@@ -343,13 +292,17 @@ uniform deg nPts (lo,hi) = ends `mappend` internal
         f i = (fromIntegral i * lo + fromIntegral (n - i) * hi) / fromIntegral n
         internal = mkKnots [f i | i <- [0..n]]
 
-minKnot :: Knots a -> Maybe (a, Int)
-minKnot (Knots _ m)
-    | M.null m  = Nothing
-    | otherwise = Just (M.findMin m)
+minKnot :: (Ord a) => Knots a -> Maybe (a, Int)
+minKnot ks@(Knots v)
+    | V.null v  = Nothing
+    | otherwise = Just (V.head v, knotMultiplicity (V.head v) ks)
 
-maxKnot :: Knots a -> Maybe (a, Int)
-maxKnot (Knots _ m)
-    | M.null m  = Nothing
-    | otherwise = Just (M.findMax m)
+maxKnot :: Eq a => Knots a -> Maybe (a, Int)
+maxKnot (Knots v)
+    | V.null v  = Nothing
+    | otherwise = let l = V.last v in
+                  case V.elemIndex l v of
+                    Nothing -> Just (l, 0) -- This should never happen
+                    Just i -> Just (l, V.length v - i)
+
 

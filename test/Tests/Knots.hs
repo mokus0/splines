@@ -1,4 +1,5 @@
 {-# LANGUAGE ExtendedDefaultRules #-}
+{-# LANGUAGE TupleSections #-}
 module Tests.Knots where
 
 import Control.Arrow
@@ -321,27 +322,27 @@ prop_splitLookup_output_disjointOrdered k kts = and
     [ disjointOrdered (M.keysSet m1) (M.keysSet m2)
     | (m1,m2) <- pairs (splitLookup' k kts)]
 prop_splitLookup_splits_input    k kts
-    =  M.unions (splitLookup' k kts)
+    =  M.unionsWith (+) (splitLookup' k kts)
     == toMap kts
 prop_splitLookup_locates_knot k kts =
     numKnots kts > 0 ==>
         let i = k `mod` numKnots kts
             (_, mbX, _) = splitLookup i kts
             x = knots kts !! i
-         in mbX == Just (x, knotMultiplicity x kts)
+         in mbX == Just x
 
 pairs xs = [(y,z) | (y:ys) <- tails xs, z <- ys]
 disjointOrdered s1 s2 = or
     [ S.null s1
     , S.null s2
-    , S.findMax s1 < S.findMin s2
+    , S.findMax s1 <= S.findMin s2
     ]
 
 -- convenience wrapper for testing; calls splitLookup then converts all three
 -- pieces of the result to M.Map k Int
 splitLookup' k kts = 
     [ toMap pre
-    , maybe M.empty (uncurry M.singleton) mbX
+    , maybe M.empty (uncurry M.singleton . (,1)) mbX
     , toMap post
     ] where (pre, mbX, post) = splitLookup k kts
 
