@@ -34,6 +34,8 @@ intervalPoly = map f $ zip3 dkts (tail dkts) (basisPolynomials kts)
 applyDeBoor :: V.Vector v Double => BSpline v Double -> Double -> Double
 applyDeBoor s = evalBSpline s
 
+{-# SPECIALIZE applyNaturalDeBoor :: BSpline BV.Vector Double -> Double -> Double #-}
+{-# SPECIALIZE applyNaturalDeBoor :: BSpline UV.Vector Double -> Double -> Double #-}
 applyNaturalDeBoor :: V.Vector v Double =>  BSpline v Double -> Double -> Double
 applyNaturalDeBoor s = evalNaturalBSpline s
 
