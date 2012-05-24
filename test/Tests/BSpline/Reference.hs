@@ -1,4 +1,4 @@
-{-# LANGUAGE ParallelListComp, ExtendedDefaultRules #-}
+{-# LANGUAGE ParallelListComp, ExtendedDefaultRules, OverlappingInstances #-}
 module Tests.BSpline.Reference where
 
 import qualified Data.Vector.Safe as V

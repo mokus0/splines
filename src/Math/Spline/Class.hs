@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE OverlappingInstances, IncoherentInstances #-}
 module Math.Spline.Class where
 
 import Control.Applicative
@@ -6,6 +7,7 @@ import Math.Spline.Knots
 import qualified Math.Spline.BSpline.Internal as BSpline
 
 import qualified Data.Vector.Safe as V
+import qualified Data.Vector.Generic.Safe as G
 import Data.VectorSpace
 
 -- |A spline is a piecewise polynomial vector-valued function.  The necessary
@@ -42,5 +44,15 @@ instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline (BSpli
     knotVector = BSpline.knotVector
     toBSpline = id
 
+instance ( VectorSpace a, Fractional (Scalar a), Ord (Scalar a), G.Vector v a
+         , G.Vector v (Scalar a)) => Spline (BSpline.BSpline v) a where
+    evalSpline = BSpline.evalBSpline
+    splineDegree = BSpline.degree
+    knotVector = BSpline.knotVector
+    toBSpline (BSpline.Spline deg ks ctp) = BSpline.Spline deg ks (G.convert $ ctp)
+
 instance Spline (BSpline.BSpline V.Vector) a => ControlPoints (BSpline.BSpline V.Vector) a where
     controlPoints = BSpline.controlPoints
+
+instance (Spline (BSpline.BSpline v) a, G.Vector v a) => ControlPoints (BSpline.BSpline v) a where
+    controlPoints = V.convert . BSpline.controlPoints
