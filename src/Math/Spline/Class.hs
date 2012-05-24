@@ -30,17 +30,17 @@ class (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline s v where
     knotVector :: s v -> Knots (Scalar v)
     knotVector = knotVector . toBSpline
     
-    toBSpline :: s v -> BSpline.BSpline v
+    toBSpline :: s v -> BSpline.BSpline V.Vector v
 
 -- TODO: this class should probably go away.  all it really does is overload something that doesn't really have any implementation-independent semantics (or does it?).
 class Spline s v => ControlPoints s v where
     controlPoints :: s v -> V.Vector v
 
-instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline BSpline.BSpline v where
+instance (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) => Spline (BSpline.BSpline V.Vector) v where
     evalSpline = BSpline.evalBSpline
     splineDegree = BSpline.degree
     knotVector = BSpline.knotVector
     toBSpline = id
 
-instance Spline BSpline.BSpline v => ControlPoints BSpline.BSpline v where
+instance Spline (BSpline.BSpline V.Vector) a => ControlPoints (BSpline.BSpline V.Vector) a where
     controlPoints = BSpline.controlPoints

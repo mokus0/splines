@@ -15,20 +15,20 @@ module Math.Spline.BSpline.Internal
 import Math.Spline.Knots
 
 import Data.Monoid
-import Data.Vector.Safe as V hiding (slice)
+import Data.Vector.Generic.Safe as V hiding (slice)
 import Data.VectorSpace
 import Prelude as P
 
 -- | A B-spline, defined by a knot vector (see 'Knots') and a sequence of control points.
-data BSpline t = Spline
+data BSpline v t = Spline
     { degree        :: !Int
     , knotVector    :: Knots (Scalar t)
-    , controlPoints :: Vector t
+    , controlPoints :: v t
     }
 
-deriving instance (Eq   (Scalar v), Eq   v) => Eq   (BSpline v)
-deriving instance (Ord  (Scalar v), Ord  v) => Ord  (BSpline v)
-instance (Show (Scalar v), Show v) => Show (BSpline v) where
+deriving instance (Eq (Scalar a), Eq (v a)) => Eq   (BSpline v a)
+deriving instance (Ord (Scalar a), Ord (v a)) => Ord  (BSpline v a)
+instance (Show (Scalar a), Show a, Show (v a)) => Show (BSpline v a) where
     showsPrec p (Spline _ kts cps) = showParen (p>10) 
         ( showString "bSpline "
         . showsPrec 11 kts
@@ -36,7 +36,7 @@ instance (Show (Scalar v), Show v) => Show (BSpline v) where
         . showsPrec 11 cps
         )
 
-mapControlPoints :: (Scalar a ~ Scalar b) => (a -> b) -> BSpline a -> BSpline b
+mapControlPoints :: (Scalar a ~ Scalar b, Vector v a, Vector v b) => (a -> b) -> BSpline v a -> BSpline v b
 mapControlPoints f spline = spline
     { controlPoints = V.map f (controlPoints spline)
     , knotVector = knotVector spline
@@ -50,8 +50,9 @@ mapControlPoints f spline = spline
 --
 -- For a standard implementation of de Boor's algorithm, see 'evalNaturalBSpline'.
 -- For a (much slower) strictly mathematically correct evaluation, see 'evalReferenceBSpline'.
-evalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
-     => BSpline v -> Scalar v -> v
+evalBSpline :: ( VectorSpace a, Fractional (Scalar a), Ord (Scalar a)
+               , Vector v a, Vector v (Scalar a))
+     => BSpline v a -> Scalar a -> a
 evalBSpline spline
      | V.null (controlPoints spline) = zeroV
      | otherwise = V.head . P.last . deBoor spline
@@ -60,26 +61,27 @@ evalBSpline spline
 -- only strictly correct inside the domain of the spline.
 -- 
 -- For a (much slower) strictly mathematically correct evaluation, see 'evalReferenceBSpline'.
-evalNaturalBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
-    => BSpline v -> Scalar v -> v
+evalNaturalBSpline :: ( VectorSpace a, Fractional (Scalar a), Ord (Scalar a)
+                      , Vector v a, Vector v (Scalar a))
+    => BSpline v a -> Scalar a -> a
 evalNaturalBSpline spline x = V.head (P.last (deBoor (slice spline x) x))
 
 -- |Insert one knot into a 'BSpline' without changing the spline's shape.
 insertKnot
-  :: (VectorSpace a, Ord (Scalar a), Fractional (Scalar a)) =>
-     BSpline a -> Scalar a -> BSpline a
+  :: (VectorSpace a, Ord (Scalar a), Fractional (Scalar a), Vector v a, Vector v (Scalar a)) =>
+     BSpline v a -> Scalar a -> BSpline v a
 insertKnot spline x = spline
     { knotVector    = knotVector spline `mappend` knot x
     , controlPoints = V.zipWith4 (interp x) us (V.drop p us) ds (V.tail ds)
     }
     where
-        us = knotsVector (knotVector spline)
+        us = V.convert $ knotsVector (knotVector spline)
         p  = degree spline
         ds = extend (controlPoints spline)
 
 -- duplicate the endpoints of a list; for example,
 -- extend [1..5] -> [1,1,2,3,4,5,5]
-extend :: Vector t -> Vector t
+extend :: Vector v t => v t -> v t
 extend vec
     | V.null vec    = V.empty
     | otherwise     = V.cons (V.head vec) (V.snoc vec (V.last vec))
@@ -88,11 +90,11 @@ extend vec
 -- (for example, if you are only evaluating the spline), then use 'slice' on the spline first.
 -- 'splitBSpline' currently uses the whole table.  It is probably not necessary there, but it 
 -- greatly simplifies the definition and makes the similarity to splitting Bezier curves very obvious.
-deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a)
-    => BSpline a -> Scalar a -> [Vector a]
-deBoor spline x = go us0 (controlPoints spline)
+deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a, Vector v a, Vector v (Scalar a))
+    => BSpline v a -> Scalar a -> [v a]
+deBoor spline x = go us0 (V.convert $ controlPoints spline)
     where
-        us0 = knotsVector (knotVector spline)
+        us0 = V.convert $ knotsVector (knotVector spline)
         -- Upper endpoints of the intervals are the same for
         -- each row in the table (they just line up differently
         -- with the lower endpoints):
@@ -128,8 +130,8 @@ interp x x0 x1 y0 y1
 -- {x in domain of f} => {x in domain of slice f x}
 -- {x in domain of f} => evalBSpline (slice f x) x == evalBSpline f x
 {-# INLINE slice #-}
-slice :: (Num (Scalar v), Ord (Scalar v), AdditiveGroup v)
-     => BSpline v -> Scalar v -> BSpline v
+slice :: (Num (Scalar a), Ord (Scalar a), AdditiveGroup a, Vector v a)
+     => BSpline v a -> Scalar a -> BSpline v a
 slice spline x = spline
     { knotVector    = stakeKnots (n + n) . sdropKnots (l - n) $ knotVector spline
     , controlPoints = vtake       n      . vdrop      (l - n) $ controlPoints spline
@@ -141,13 +143,13 @@ slice spline x = spline
         us = knotsVector (knotVector spline)
 
 -- Try to take n, but if there's not enough, pad the rest with 0s
-vtake :: AdditiveGroup t => Int -> Vector t -> Vector t
+vtake :: (Vector v t, AdditiveGroup t) => Int -> v t -> v t
 vtake n xs
     | n <= V.length xs = V.take n xs
     | otherwise = xs V.++ V.replicate (n - V.length xs) zeroV
 
 -- Try to drop n, but if n is negative, pad the beginning with 0s
-vdrop :: AdditiveGroup t => Int -> Vector t -> Vector t
+vdrop :: (Vector v t, AdditiveGroup t) => Int -> v t -> v t
 vdrop n xs
     | n >= 0 = V.drop n xs
     | otherwise = V.replicate (-n) zeroV V.++ xs

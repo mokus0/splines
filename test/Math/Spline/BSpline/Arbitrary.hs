@@ -5,7 +5,7 @@ module Math.Spline.BSpline.Arbitrary where
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector.Generic.Safe as V
 import Data.VectorSpace
 import Math.Spline
 import Math.Spline.BSpline
@@ -13,7 +13,8 @@ import Math.Spline.Knots
 import Math.Spline.Knots.Arbitrary
 import Test.QuickCheck
 
-instance (Arbitrary v, Ord (Scalar v), Arbitrary (Scalar v)) => Arbitrary (BSpline v) where
+instance (Arbitrary a, Ord (Scalar a), Arbitrary (Scalar a), V.Vector v a) =>
+    Arbitrary (BSpline v a) where
     arbitrary = sized $ \sz -> do
         let ktsSz = sz `div` 2
         kts <- resize (max 1 ktsSz) arbitrary `suchThat` \kts -> numKnots kts > 0

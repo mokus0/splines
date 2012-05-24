@@ -202,7 +202,7 @@ evalReferenceBSpline_tests =
     [ testProperty "definition" prop_evalReferenceBSpline_definition
     ]
 
-prop_evalReferenceBSpline_definition :: BSpline Rational -> Rational -> Bool
+prop_evalReferenceBSpline_definition :: BSpline V.Vector Rational -> Rational -> Bool
 prop_evalReferenceBSpline_definition f x
     =  evalReferenceBSpline f x
     == sum (zipWith (*) (V.toList (controlPoints f)) (bases (knotVector f) x !! splineDegree f))
@@ -212,11 +212,11 @@ fitPolyToBSplineAt_tests =
     , testProperty "evaluates to same value"    prop_fitPolyToBSplineAt_eval
     ]
 
-prop_fitPolyToBSplineAt_degree :: SplineAndPoint BSpline Rational -> Bool
+prop_fitPolyToBSplineAt_degree :: SplineAndPoint (BSpline V.Vector) Rational -> Bool
 prop_fitPolyToBSplineAt_degree (SplineAndPoint f x) =
     polyDegree (fitPolyToBSplineAt f x) <= splineDegree f
 
-prop_fitPolyToBSplineAt_eval :: SplineAndPoint BSpline Rational -> Bool
+prop_fitPolyToBSplineAt_eval :: SplineAndPoint (BSpline V.Vector) Rational -> Bool
 prop_fitPolyToBSplineAt_eval (SplineAndPoint f x)
     =  evalPoly (fitPolyToBSplineAt f x) x
     == evalReferenceBSpline f x

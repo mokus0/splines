@@ -12,7 +12,7 @@ module Math.Spline.BSpline.Reference
     , fitPolyToBSplineAt
     ) where
 
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector.Generic.Safe as V
 import Data.VectorSpace (VectorSpace, Scalar, (^*), sumV)
 import Math.Spline.Knots
 import Math.Spline.BSpline.Internal
@@ -22,8 +22,8 @@ import qualified Math.Polynomial as Poly
 -- | This is a fairly slow function which computes the value of a B-spline at a given point,
 -- using the mathematical definition of B-splines.  It is mainly for testing purposes, as a
 -- reference against which the other evaluation functions are checked.
-evalReferenceBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v)) 
-    => BSpline v -> Scalar v -> v
+evalReferenceBSpline :: (VectorSpace a, Fractional (Scalar a), Ord (Scalar a), V.Vector v a) 
+    => BSpline v a -> Scalar a -> a
 evalReferenceBSpline (Spline deg kts cps) x =
     sumV (zipWith (^*) (V.toList cps) (bases kts x !! deg))
 
@@ -31,8 +31,8 @@ evalReferenceBSpline (Spline deg kts cps) x =
 -- one containing the given point), using the mathematical definition of B-splines.  It is 
 -- mainly for testing purposes, as a reference against which the other evaluation functions
 -- are checked.
-fitPolyToBSplineAt :: (Fractional a, Ord a, Scalar a ~ a)
-    => BSpline a -> a -> Poly a
+fitPolyToBSplineAt :: (Fractional a, Ord a, Scalar a ~ a, V.Vector v a)
+    => BSpline v a -> a -> Poly a
 fitPolyToBSplineAt (Spline deg kts cps) x = 
     Poly.sumPolys (zipWith Poly.scalePoly (V.toList cps) (basisPolynomialsAt kts x !! deg))
 

@@ -64,8 +64,8 @@ instance Spline MSpline v => ControlPoints MSpline v where
 toMSpline :: Spline s v => s v -> MSpline v
 toMSpline = fromBSpline . toBSpline
 
-fromBSpline :: (VectorSpace v, Fractional (Scalar v), Ord (Scalar v))
-    => BSpline v -> MSpline v
+fromBSpline :: (VectorSpace a, Fractional (Scalar a), Ord (Scalar a))
+    => BSpline (V.Vector) a -> MSpline a
 fromBSpline spline = mSpline ks cs
     where
         n = splineDegree spline + 1; n' = fromIntegral n

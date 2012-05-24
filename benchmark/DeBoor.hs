@@ -15,7 +15,7 @@ import Control.Monad
 kts = mkKnots $ [0,0,0] ++ [0..10] ++ [11,11,11]
 ctPts = map sin [0..12]
 
-spline :: BSpline Double
+spline :: BSpline V.Vector Double
 spline = bSpline kts (V.fromList ctPts)
 
 intervalPoly :: [(Double, Double, Poly Double)]

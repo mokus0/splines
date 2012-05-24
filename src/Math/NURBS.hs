@@ -14,7 +14,7 @@ import Math.Spline.BSpline.Internal
 import Math.Spline.BSpline
 import Math.Spline.Knots
 
-newtype NURBS v = NURBS (BSpline (Scalar v, v))
+newtype NURBS v = NURBS (BSpline V.Vector (Scalar v, v))
 
 deriving instance (Eq   v, Eq   (Scalar v), Eq   (Scalar (Scalar v))) => Eq   (NURBS v)
 deriving instance (Ord  v, Ord  (Scalar v), Ord  (Scalar (Scalar v))) => Ord  (NURBS v)
@@ -34,14 +34,14 @@ nurbs kts cps = NURBS (bSpline kts cps)
 
 -- |Constructs the homogeneous-coordinates B-spline that corresponds to this
 -- NURBS curve
-nurbsAsSpline :: VectorSpace v => NURBS v -> BSpline (Scalar v, v)
+nurbsAsSpline :: VectorSpace v => NURBS v -> BSpline V.Vector (Scalar v, v)
 nurbsAsSpline (NURBS spline) = spline 
     { controlPoints = V.map homogenize (controlPoints spline) }
     where
         homogenize (w,v) = (w, v ^* w)
 
 -- |Constructs the NURBS curve corresponding to a homogeneous-coordinates B-spline
-splineAsNURBS :: (VectorSpace v, Fractional (Scalar v)) => BSpline (Scalar v, v) -> NURBS v
+splineAsNURBS :: (VectorSpace v, Fractional (Scalar v)) => BSpline V.Vector (Scalar v, v) -> NURBS v
 splineAsNURBS spline = NURBS spline 
     { controlPoints = V.map unHomogenize (controlPoints spline) }
     where
