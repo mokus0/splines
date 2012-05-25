@@ -7,6 +7,7 @@ module Math.Spline.BSpline
     , insertKnot
     , splitBSpline
     , differentiateBSpline, integrateBSpline
+    , deBoor
     ) where
 
 import Math.Spline.Knots
