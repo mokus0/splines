@@ -125,17 +125,18 @@ extend vec
     | V.null vec    = V.empty
     | otherwise     = V.cons (V.head vec) (V.snoc vec (V.last vec))
 
+{-# SPECIALIZE deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a)
+  => BSpline BV.Vector a -> Scalar a -> [BV.Vector a] #-}
+{-# SPECIALIZE deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a,
+                          UV.Unbox a, UV.Unbox (Scalar a))
+  => BSpline UV.Vector a -> Scalar a -> [UV.Vector a] #-}
+
 -- | The table from de Boor's algorithm, calculated for the entire spline.  If that is not necessary
 -- (for example, if you are only evaluating the spline), then use 'slice' on the spline first.
 -- 'splitBSpline' currently uses the whole table.  It is probably not necessary there, but it 
 -- greatly simplifies the definition and makes the similarity to splitting Bezier curves very obvious.
 deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a, V.Vector v a, V.Vector v (Scalar a))
     => BSpline v a -> Scalar a -> [v a]
-{-# SPECIALIZE deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a)
-  => BSpline BV.Vector a -> Scalar a -> [BV.Vector a] #-}
-{-# SPECIALIZE deBoor :: (Fractional (Scalar a), Ord (Scalar a), VectorSpace a,
-                          UV.Unbox a, UV.Unbox (Scalar a)
-  => BSpline UV.Vector a -> Scalar a -> [UV.Vector a] #-}
 deBoor spline x = go us0 (controlPoints spline)
     where
         us0 = V.convert $ knotsVector (knotVector spline)
