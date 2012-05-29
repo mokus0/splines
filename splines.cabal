@@ -40,7 +40,8 @@ Library
                         containers,
                         polynomial,
                         vector >= 0.8,
-                        vector-space
+                        vector-space,
+                        vector-algorithms
 
 Test-Suite splines-test
   type:                 exitcode-stdio-1.0

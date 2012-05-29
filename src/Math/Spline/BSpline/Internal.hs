@@ -17,6 +17,7 @@ import Math.Spline.Knots
 
 import Control.Monad.ST.Safe
 import Data.Monoid
+import Data.Vector.Algorithms.Search
 import qualified Data.Vector.Generic.Safe as V
 import qualified Data.Vector.Generic.Mutable.Safe as MV
 import qualified Data.Vector.Safe as BV (Vector)
@@ -182,9 +183,11 @@ slice spline x = spline
     , controlPoints = vtake       n      . vdrop      (l - n) $ controlPoints spline
     }
     where
-        l = maybe 0 id $ V.findIndex (> x) us
+        l = runST $ do
+              v <- V.thaw us
+              binarySearchR v x
         n = degree spline + 1
-        
+
         us = knotsVector (knotVector spline)
 
 -- Try to take n, but if there's not enough, pad the rest with 0s
