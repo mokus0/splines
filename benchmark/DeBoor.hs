@@ -25,10 +25,10 @@ boxedSpline :: BSpline BV.Vector Double
 boxedSpline = bSpline kts (V.fromList ctPts)
 
 
-intervalPoly :: [(Double, Double, Poly Double)]
-intervalPoly = map f $ zip3 dkts (tail dkts) (basisPolynomials kts)
+intervalPoly :: BV.Vector (Double, Double, Poly Double)
+intervalPoly = V.map f $ V.zip3 dkts (V.tail dkts) (V.fromList $ basisPolynomials kts)
   where
-    dkts = distinctKnots kts
+    dkts = distinctKnotsVector kts
     f (begin, end, k) = (begin, end, ) . sumPolys $ zipWith scalePoly ctPts (k !! 3)
 
 applyDeBoor :: V.Vector v Double => BSpline v Double -> Double -> Double
@@ -40,7 +40,8 @@ applyNaturalDeBoor :: V.Vector v Double =>  BSpline v Double -> Double -> Double
 applyNaturalDeBoor s = evalNaturalBSpline s
 
 applyPoly :: Double -> Double
-applyPoly x = maybe 0 (\(_,_,p) -> evalPoly p x) $ find (\(b,e,_) -> x >= b && x < e) intervalPoly
+applyPoly x = maybe 0 (\(_,_,p) -> evalPoly p x) $
+              V.find (\(b,e,_) -> x >= b && x < e) intervalPoly
 
 applyAndSum :: (Double -> Double) -> [Double] -> Double
 applyAndSum f = sum . map f
