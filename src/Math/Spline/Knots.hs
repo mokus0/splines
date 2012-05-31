@@ -131,7 +131,7 @@ numKnots (Knots v) = V.length v
 
 -- |Returns the number of distinct knots in a knot vector.
 numDistinctKnots :: Eq t => Knots t -> Int
-numDistinctKnots kts = numKnots $ Knots $ distinctKnotsVector kts
+numDistinctKnots kts = V.length $ distinctKnotsVector kts
 
 maxMultiplicity :: Ord t => Knots t -> Int
 maxMultiplicity kts@(Knots v)
@@ -139,11 +139,9 @@ maxMultiplicity kts@(Knots v)
     | otherwise = maximum $ toMap kts
 
 lookupKnot :: Int -> Knots a -> Maybe a
-lookupKnot k kts
-    | k < 0             = Nothing
-    | k < numKnots kts  = mbKt
-    | otherwise         = Nothing
-    where (_, mbKt, _) = splitLookup k kts
+lookupKnot k (Knots kts) = do
+    guard (0 <= k && k < V.length kts)
+    V.indexM kts k
 
 lookupDistinctKnot :: Eq a => Int -> Knots a -> Maybe a
 lookupDistinctKnot k kts = lookupKnot k . Knots $ distinctKnotsVector kts
@@ -223,7 +221,7 @@ splitFind k (Knots v) = (Knots lt, Knots eq, Knots gt)
 valid :: (Ord k, Num k) => Knots k -> Bool
 valid (Knots v)
     | V.null v  = True
-    | otherwise = V.all (>=0) $ V.zipWith (-) (V.tail v) v
+    | otherwise = V.and $ V.zipWith (>=) (V.tail v) v
 
 -- |@knotSpan kts i j@ returns the knot span extending from the @i@'th knot
 -- to the @j@'th knot, if  @i <= j@ and both knots exist.
