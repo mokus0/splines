@@ -42,17 +42,16 @@ module Math.Spline.Knots
 import Prelude hiding (sum, maximum)
 import Control.Arrow
 import Control.Monad (guard)
-import Data.Foldable (Foldable(foldMap), sum, maximum)
+import Data.Foldable (Foldable(foldMap), maximum)
 import Data.List (sortBy, sort)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
-import Data.Maybe (fromMaybe)
 import Data.Ord
 import qualified Data.Set as S (Set, fromAscList, toAscList)
 import qualified Data.Vector.Safe as V
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
-data Knots a = Knots !(V.Vector a) deriving (Eq, Ord)
+newtype Knots a = Knots (V.Vector a) deriving (Eq, Ord)
 
 instance Show a => Show (Knots a) where
     showsPrec p ks = showParen (p > 10)
@@ -164,28 +163,6 @@ splitLookup k (Knots v)
   where
     (lt, gt) = V.splitAt k v
 
--- Prepend or append an element to a map, without checking the precondition
--- that the new pair's key is less than (greater than, resp.) all keys in 
--- the map.
-ascCons :: (k, a) -> M.Map k a -> M.Map k a
-ascCons x m = M.fromDistinctAscList (x : M.toAscList m)
-
-ascSnoc :: M.Map k a -> (k, a) -> M.Map k a
-ascSnoc m x = M.fromDistinctAscList (M.toAscList m ++ [x])
-
--- Prepend or append an knot to a knot vector, without checking the
--- precondition that the new knot's location is less than (greater than,
--- resp.) all knots in the vector.
-ascConsKnot :: (k, Int) -> Knots k -> Knots k
-ascConsKnot (k, m) (Knots v) = Knots $ (V.replicate m k) V.++ v
-
-ascSnocKnot :: Knots k -> (k, Int) -> Knots k
-ascSnocKnot (Knots v) (k, m) = Knots $ v V.++ (V.replicate m k)
-
-
-clamp :: Ord a => a -> a -> a -> a
-clamp lo hi = max lo . min hi
-
 dropKnots :: Int -> Knots a -> Knots a
 dropKnots k (Knots v) = Knots $ V.drop k v
 
@@ -234,10 +211,10 @@ setKnotMultiplicity :: Ord k => k -> Int -> Knots k -> Knots k
 setKnotMultiplicity k n kts@(Knots v)
     | n <= 0    = Knots (V.filter (/= k) v)
     | otherwise = Knots $ V.concat [lt, V.replicate n k, gt]
-        where (Knots lt, Knots eq, Knots gt) = splitFind k kts
+        where (Knots lt, _, Knots gt) = splitFind k kts
 
 splitFind :: Ord k => k -> Knots k -> (Knots k, Knots k, Knots k)
-splitFind k kts@(Knots v) = (Knots lt, Knots eq, Knots gt)
+splitFind k (Knots v) = (Knots lt, Knots eq, Knots gt)
   where
     (lt, xs) = V.span (<k) v
     (eq, gt) = V.span (==k) xs
@@ -245,7 +222,7 @@ splitFind k kts@(Knots v) = (Knots lt, Knots eq, Knots gt)
 -- |Check the internal consistency of a knot vector
 valid :: (Ord k, Num k) => Knots k -> Bool
 valid (Knots v)
-    | V.null v = True
+    | V.null v  = True
     | otherwise = V.all (>=0) $ V.zipWith (-) (V.tail v) v
 
 -- |@knotSpan kts i j@ returns the knot span extending from the @i@'th knot
