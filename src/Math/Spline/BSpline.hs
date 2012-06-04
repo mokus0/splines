@@ -79,20 +79,20 @@ splitBSpline
      , V.Vector v (Scalar a)) =>
      BSpline v a -> Scalar a -> Maybe (BSpline v a, BSpline v a)
 splitBSpline spline@(Spline p kv _) t 
-    | inDomain  = Just (Spline p (mkKnots us0) ds0, Spline p (mkKnots us1) ds1)
+    | inDomain  = Just (Spline p us0 ds0, Spline p us1 ds1)
     | otherwise = Nothing
     where
         inDomain = case knotDomain kv p of
             Nothing         -> False
             Just (t0, t1)   -> t >= t0 && t <= t1
         
-        us = knots kv
+        (lt, _, gt) = splitFind t kv
         dss = deBoor spline t
         
-        us0 = takeWhile (<t) us ++ replicate (p+1) t
-        ds0 = V.fromList (trimTo (drop (p+1) us0) (map V.head dss))
+        us0 = setKnotMultiplicity t (p+1) lt
+        ds0 = trimTo us0 (map V.head dss)
         
-        us1 = replicate (p+1) t ++ dropWhile (<=t) us
-        ds1 = V.reverse (V.fromList (trimTo (drop (p+1) us1) (map V.last dss)))
-
-        trimTo list  xs = zipWith const xs list
+        us1 = setKnotMultiplicity t (p+1) gt
+        ds1 = V.reverse (trimTo us1 (map V.last dss))
+        
+        trimTo kts = V.fromList . take (numKnots kts - p - 1)

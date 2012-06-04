@@ -27,6 +27,8 @@ module Math.Spline.Knots
     , maxMultiplicity
     , knotMultiplicity, setKnotMultiplicity
     
+    , splitFind
+    
     , fromAscList, fromDistinctAscList
     , valid
     
