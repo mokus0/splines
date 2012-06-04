@@ -10,7 +10,9 @@ module Math.Spline.Knots
     , toList, numDistinctKnots, lookupDistinctKnot
     
     , knots, knotsVector
-    , distinctKnots, distinctKnotsVector, distinctKnotsSet
+    , distinctKnots, multiplicities
+    , distinctKnotsVector, multiplicitiesVector
+    , distinctKnotsSet
     
     , toMap
     , fromMap
@@ -40,14 +42,14 @@ module Math.Spline.Knots
     ) where
 
 import Prelude hiding (sum, maximum)
-import Control.Arrow
+import Control.Arrow ((***))
 import Control.Monad (guard)
 import Data.Foldable (Foldable(foldMap), maximum)
-import Data.List (sortBy, sort)
+import Data.List (sortBy, sort, unfoldr)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Ord
-import qualified Data.Set as S (Set, fromAscList, toAscList)
+import qualified Data.Set as S (Set, fromAscList)
 import qualified Data.Vector.Safe as V
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
@@ -65,7 +67,7 @@ instance (Ord a) => Monoid (Knots a) where
       Knots . V.fromList . sort . V.toList $ v1 V.++ v2
 
 instance Foldable Knots where
-    foldMap f = foldMap f . knots
+    foldMap f = foldMap f . knotsVector
 
 
 -- |An empty knot vector
@@ -116,14 +118,18 @@ fromVector = fromList . V.toList
 
 -- |Returns a list of all distinct knots in ascending order along with
 -- their multiplicities.
-toList :: Ord k => Knots k -> [(k, Int)]
-toList = M.toList . toMap
+toList :: Eq k => Knots k -> [(k, Int)]
+toList = unfoldr $ \kts -> do
+    kt <- minKnot kts
+    return (kt, dropKnots (snd kt) kts)
 
-toVector :: Ord k => Knots k -> V.Vector (k, Int)
-toVector = V.fromList . toList
+toVector :: Eq k => Knots k -> V.Vector (k, Int)
+toVector = V.unfoldr $ \kts -> do
+    kt <- minKnot kts
+    return (kt, dropKnots (snd kt) kts)
 
 toMap :: Ord k => Knots k -> M.Map k Int
-toMap (Knots v) = V.foldl' (\m u -> M.insertWith (+) u 1 m) M.empty v
+toMap = M.fromAscListWith (+) . toList
 
 -- |Returns the number of knots (not necessarily distinct) in a knot vector.
 numKnots :: Knots t -> Int
@@ -131,7 +137,7 @@ numKnots (Knots v) = V.length v
 
 -- |Returns the number of distinct knots in a knot vector.
 numDistinctKnots :: Eq t => Knots t -> Int
-numDistinctKnots kts = V.length $ distinctKnotsVector kts
+numDistinctKnots = V.length . distinctKnotsVector
 
 maxMultiplicity :: Ord t => Knots t -> Int
 maxMultiplicity kts@(Knots v)
@@ -170,14 +176,18 @@ takeKnots k (Knots v) = Knots $ V.take k v
 splitKnotsAt :: Int -> Knots a -> (Knots a, Knots a)
 splitKnotsAt k (Knots v) = Knots *** Knots $ V.splitAt k v
 
-takeDistinctKnots :: (Ord a, Eq a) => Int -> Knots a -> Knots a
-takeDistinctKnots k kts = fromDistinctAscList . take k $ toList kts
+-- |Count the number of knots less than the n'th distinct knot.
+findDistinctKnot :: Eq a => Int -> Knots a -> Int
+findDistinctKnot n = V.last . V.take (1 + max 0 n) . V.scanl (+) 0 . multiplicitiesVector
 
-dropDistinctKnots :: Ord a => Int -> Knots a -> Knots a
-dropDistinctKnots k kts = fromDistinctAscList . drop k $ toList kts
+takeDistinctKnots :: (Ord a) => Int -> Knots a -> Knots a
+takeDistinctKnots k kts = takeKnots (findDistinctKnot k kts) kts
+
+dropDistinctKnots :: (Ord a) => Int -> Knots a -> Knots a
+dropDistinctKnots k kts = dropKnots (findDistinctKnot k kts) kts
 
 splitDistinctKnotsAt :: (Ord a, Eq a) => Int -> Knots a -> (Knots a, Knots a)
-splitDistinctKnotsAt k kts = fromAscList *** fromAscList $ splitAt k (toList kts)
+splitDistinctKnotsAt k kts = splitKnotsAt (findDistinctKnot k kts) kts
 
 -- |Returns a list of all knots (not necessarily distinct) of a knot vector in ascending order
 knots :: Knots t -> [t]
@@ -189,11 +199,17 @@ knotsVector (Knots v) = v
 
 -- |Returns a list of all distinct knots of a knot vector in ascending order
 distinctKnots :: Eq t => Knots t -> [t]
-distinctKnots kts = S.toAscList $ distinctKnotsSet kts
+distinctKnots = map fst . toList
+
+multiplicities :: Eq t => Knots t -> [Int]
+multiplicities = map snd . toList
 
 -- |Returns a vector of all distinct knots of a knot vector in ascending order
 distinctKnotsVector :: Eq t => Knots t -> V.Vector t
-distinctKnotsVector = V.fromList . distinctKnots
+distinctKnotsVector = V.map fst . toVector
+
+multiplicitiesVector :: Eq a => Knots a -> V.Vector Int
+multiplicitiesVector = V.map snd . toVector
 
 -- |Returns a 'S.Set' of all distinct knots of a knot vector
 distinctKnotsSet :: Eq k => Knots k -> S.Set k
@@ -267,17 +283,13 @@ uniform deg nPts (lo,hi) = ends `mappend` internal
         f i = (fromIntegral i * lo + fromIntegral (n - i) * hi) / fromIntegral n
         internal = mkKnots [f i | i <- [0..n]]
 
-minKnot :: (Ord a) => Knots a -> Maybe (a, Int)
-minKnot ks@(Knots v)
+{-# INLINE minKnot #-}
+minKnot :: (Eq a) => Knots a -> Maybe (a, Int)
+minKnot (Knots v)
     | V.null v  = Nothing
-    | otherwise = Just (V.head v, knotMultiplicity (V.head v) ks)
+    | otherwise = Just (kt, V.length (V.takeWhile (kt ==) v))
+    where kt = V.head v
 
+{-# INLINE maxKnot #-}
 maxKnot :: Eq a => Knots a -> Maybe (a, Int)
-maxKnot (Knots v)
-    | V.null v  = Nothing
-    | otherwise = let l = V.last v in
-                  case V.elemIndex l v of
-                    Nothing -> Just (l, 0) -- This should never happen
-                    Just i -> Just (l, V.length v - i)
-
-
+maxKnot (Knots v) = minKnot (Knots (V.reverse v))
