@@ -84,7 +84,7 @@ splitBSpline spline@(Spline p kv _) t
     where
         inDomain = case knotDomain kv p of
             Nothing         -> False
-            Just (t0, t1)   -> t >= t0 || t <= t1
+            Just (t0, t1)   -> t >= t0 && t <= t1
         
         us = knots kv
         dss = deBoor spline t

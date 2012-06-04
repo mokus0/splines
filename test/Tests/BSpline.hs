@@ -23,6 +23,7 @@ bSplineTests =
     [ testGroup "evalBSpline"           evalBSpline_tests
     , testGroup "evalNaturalBSpline"    evalNaturalBSpline_tests
     , testGroup "insertKnot"            insertKnot_tests
+    , testGroup "splitBSpline"          splitBSpline_tests
     , testGroup "differentiateBSpline"  differentiateBSpline_tests
     , testGroup "integrateBSpline"      integrateBSpline_tests
     ]
@@ -58,6 +59,19 @@ prop_insertKnot_preserves_shape (SplineAndPoint f x)
         y >= x0 && (x < x1 || y < x1) 
             ==> evalNaturalBSpline f y
              == evalNaturalBSpline (insertKnot f x) y
+    where 
+        Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
+
+splitBSpline_tests =
+    [ testProperty "preserves sum"          prop_splitBSpline_preserves_sum
+    ]
+
+prop_splitBSpline_preserves_sum (NonEmptySpline f) x =
+    case splitBSpline f x of
+        Nothing -> property (x < x0 || x > x1)
+        Just (f1, f2) -> flip directed_test (knotVector f) $ \_kts y ->
+               evalNaturalBSpline f y
+            == evalNaturalBSpline f1 y + evalNaturalBSpline f2 y
     where 
         Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
 
