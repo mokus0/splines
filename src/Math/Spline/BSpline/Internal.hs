@@ -91,7 +91,8 @@ evalNaturalBSpline spline x = runST $ do
             --  x < u1 is guaranteed by 'slice'
             let !u0 = kts V.! (j + i)
                 !u1 = kts V.! (j + p)
-                !a  = (x - u0) / (u1 - u0)
+                !du = u1 - u0
+                !a  = if du == 0 then 1 else (x - u0) / du
             
             d0 <- MV.read ds  j
             d1 <- MV.read ds (j + 1)
