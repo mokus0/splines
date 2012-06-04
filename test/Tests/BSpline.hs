@@ -3,11 +3,13 @@ module Tests.BSpline where
 import Control.Applicative
 import Data.Maybe
 import Data.Vector.Safe as V
+import Data.VectorSpace
 import Math.Polynomial (polyDeriv)
 import Math.Spline
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Arbitrary
 import Math.Spline.BSpline.Reference
+import Math.Spline.Knots.Arbitrary
 import Test.Framework (testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck
@@ -20,6 +22,7 @@ valid f = splineDegree (bSpline kts cps) == splineDegree f
 bSplineTests = 
     [ testGroup "evalBSpline"           evalBSpline_tests
     , testGroup "evalNaturalBSpline"    evalNaturalBSpline_tests
+    , testGroup "insertKnot"            insertKnot_tests
     , testGroup "differentiateBSpline"  differentiateBSpline_tests
     , testGroup "integrateBSpline"      integrateBSpline_tests
     ]
@@ -43,6 +46,18 @@ prop_evalNaturalBSpline_interior (SplineAndPoint f x)
     = x /= x1
         ==> evalNaturalBSpline   f x 
          == evalReferenceBSpline f x
+    where 
+        Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
+
+insertKnot_tests =
+    [ testProperty "preserves shape"        prop_insertKnot_preserves_shape
+    ]
+
+prop_insertKnot_preserves_shape (SplineAndPoint f x)
+    = forAll (lerp x0 x1 <$> arb01) $ \y ->
+        y >= x0 && (x < x1 || y < x1) 
+            ==> evalNaturalBSpline f y
+             == evalNaturalBSpline (insertKnot f x) y
     where 
         Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
 
