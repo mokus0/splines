@@ -66,12 +66,13 @@ splitBSpline_tests =
     [ testProperty "preserves sum"          prop_splitBSpline_preserves_sum
     ]
 
-prop_splitBSpline_preserves_sum (NonEmptySpline f) x =
-    case splitBSpline f x of
-        Nothing -> property (x < x0 || x > x1)
-        Just (f1, f2) -> flip directed_test (knotVector f) $ \_kts y ->
-               evalNaturalBSpline f y
-            == evalNaturalBSpline f1 y + evalNaturalBSpline f2 y
+prop_splitBSpline_preserves_sum (NonEmptySpline f) =
+    flip directed_test (knotVector f) $ \_kts x ->
+        case splitBSpline f x of
+            Nothing -> property (x < x0 || x > x1)
+            Just (f1, f2) -> flip directed_test (knotVector f) $ \_kts y ->
+                   evalNaturalBSpline f y
+                == evalNaturalBSpline f1 y + evalNaturalBSpline f2 y
     where 
         Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
 
