@@ -9,6 +9,7 @@ import Math.Spline
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Arbitrary
 import Math.Spline.BSpline.Reference
+import Math.Spline.Knots (knotsVector)
 import Math.Spline.Knots.Arbitrary
 import Test.Framework (testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
@@ -29,7 +30,9 @@ bSplineTests =
     ]
 
 evalBSpline_tests =
-    [ testProperty "agrees with evalReferenceBSpline on spline domain" prop_evalBSpline_interior
+    [ testProperty "agrees with evalReferenceBSpline on spline domain"  prop_evalBSpline_interior
+    , testProperty "achieves final control point value"                 prop_evalBSpline_upper_knot
+    , testProperty "maintains final control point value"                prop_evalBSpline_above_upper_knot
     ]
 
 prop_evalBSpline_interior (SplineAndPoint f x) 
@@ -38,6 +41,17 @@ prop_evalBSpline_interior (SplineAndPoint f x)
          == evalReferenceBSpline f x
     where 
         Just (x0, x1) = splineDomain (f :: BSpline V.Vector Rational)
+
+prop_evalBSpline_upper_knot (NonEmptySpline f)
+    = evalBSpline f x
+    == V.last (controlPoints f)
+    where x = V.last (knotsVector (knotVector (f :: BSpline V.Vector Double)))
+
+prop_evalBSpline_above_upper_knot (NonEmptySpline f) x
+    = x >= x0 
+        ==> evalBSpline f x
+         == V.last (controlPoints f)
+    where x0 = V.last (knotsVector (knotVector (f :: BSpline V.Vector Double)))
 
 evalNaturalBSpline_tests =
     [ testProperty "agrees with evalReferenceBSpline on spline domain" prop_evalNaturalBSpline_interior
