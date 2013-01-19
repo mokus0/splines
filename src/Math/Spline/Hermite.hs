@@ -14,7 +14,7 @@ import Math.Polynomial hiding (x)
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- | Cubic Hermite splines.  These are cubic splines defined by a 

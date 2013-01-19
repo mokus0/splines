@@ -12,7 +12,7 @@ module Math.Spline.BSpline.Reference
     , fitPolyToBSplineAt
     ) where
 
-import qualified Data.Vector.Generic.Safe as V
+import qualified Data.Vector.Generic as V
 import Data.VectorSpace (VectorSpace, Scalar, (^*), sumV)
 import Math.Spline.Knots
 import Math.Spline.BSpline.Internal

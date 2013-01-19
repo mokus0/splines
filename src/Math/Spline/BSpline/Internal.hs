@@ -15,12 +15,12 @@ module Math.Spline.BSpline.Internal
 
 import Math.Spline.Knots
 
-import Control.Monad.ST.Safe
+import Control.Monad.ST
 import Data.Monoid
-import qualified Data.Vector.Generic.Safe as V
-import qualified Data.Vector.Generic.Mutable.Safe as MV
-import qualified Data.Vector.Safe as BV (Vector)
-import qualified Data.Vector.Unboxed.Safe as UV (Vector, Unbox)
+import qualified Data.Vector.Generic as V
+import qualified Data.Vector.Generic.Mutable as MV
+import qualified Data.Vector as BV (Vector)
+import qualified Data.Vector.Unboxed as UV (Vector, Unbox)
 import Data.VectorSpace
 import Prelude as P
 

@@ -52,7 +52,7 @@ import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Ord
 import qualified Data.Set as S (Set, fromAscList)
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector as V
 
 -- |Knot vectors - multisets of points in a 1-dimensional space.
 newtype Knots a = Knots (V.Vector a) deriving (Eq, Ord)

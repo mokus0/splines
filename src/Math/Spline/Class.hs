@@ -6,8 +6,8 @@ import Control.Applicative
 import Math.Spline.Knots
 import qualified Math.Spline.BSpline.Internal as BSpline
 
-import qualified Data.Vector.Safe as V
-import qualified Data.Vector.Generic.Safe as G
+import qualified Data.Vector as V
+import qualified Data.Vector.Generic as G
 import Data.VectorSpace
 
 -- |A spline is a piecewise polynomial vector-valued function.  The necessary

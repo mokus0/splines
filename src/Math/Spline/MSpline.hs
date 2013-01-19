@@ -12,7 +12,7 @@ module Math.Spline.MSpline
 import Math.Spline.BSpline
 import Math.Spline.Class
 import Math.Spline.Knots
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector as V
 import Data.VectorSpace
 
 -- |M-Splines are B-splines normalized so that the integral of each basis 
