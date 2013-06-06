@@ -36,6 +36,7 @@ module Math.Spline.Knots
     , knotsInSpan
     , knotSpans
     , knotDomain
+    , findSpan
     
     , uniform
     
@@ -48,6 +49,7 @@ import Control.Arrow ((***))
 import Control.Monad (guard)
 import Data.Foldable (Foldable(foldMap), maximum)
 import Data.List (sortBy, sort, unfoldr)
+import Data.Maybe (fromJust)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Ord
@@ -264,6 +266,18 @@ knotSpans ks w
     | w <= 0    = error "knotSpans: width must be positive"
     | otherwise = zip kts (drop w kts)
     where kts = knots ks
+
+-- | @findSpan kv p u@ returns i such that u falls between the @i@'th knot
+-- and knot @i+1@.  In particular, for multiple knots, the highest i is chosen.
+-- If u is equal to the highest knot value, the highest knot with lower parameter
+-- is returned.
+findSpan :: Ord a => Knots a -> a -> Maybe Int
+findSpan k u = case maxKnot k of
+  Nothing                -> Nothing
+  Just (hi, m) | hi == u -> Just $ (numKnots k) - m - 1
+  _                      -> Just $ mult - 1 where
+                            distinct = V.findIndex (> u) (distinctKnotsVector k)
+                            mult = V.sum $ V.take (fromJust distinct) $ multiplicitiesVector k
 
 -- |@knotDomain kts p@ returns the domain of a B-spline or NURBS with knot
 -- vector @kts@ and degree @p@.  This is the subrange spanned by all
