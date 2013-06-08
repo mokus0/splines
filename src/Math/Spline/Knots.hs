@@ -272,12 +272,17 @@ knotSpans ks w
 -- If u is equal to the highest knot value, the highest knot with lower parameter
 -- is returned.
 findSpan :: Ord a => Knots a -> a -> Maybe Int
-findSpan k u = case maxKnot k of
-  Nothing                -> Nothing
-  Just (hi, m) | hi == u -> Just $ (numKnots k) - m - 1
-  _                      -> Just $ mult - 1 where
-                            distinct = V.findIndex (> u) (distinctKnotsVector k)
-                            mult = V.sum $ V.take (fromJust distinct) $ multiplicitiesVector k
+findSpan k u = 
+  case minKnot k of
+    Nothing -> Nothing
+    Just (lo, _) | lo > u    -> Nothing
+    _ -> case maxKnot k of
+      Nothing                -> Nothing
+      Just (hi, m) | hi == u -> Just $ (numKnots k) - m - 1
+                   | hi <  u -> Nothing
+      _                      -> Just $ mult - 1 where
+        distinct = V.findIndex (> u) (distinctKnotsVector k)
+        mult = V.sum $ V.take (fromJust distinct) $ multiplicitiesVector k
 
 -- |@knotDomain kts p@ returns the domain of a B-spline or NURBS with knot
 -- vector @kts@ and degree @p@.  This is the subrange spanned by all
