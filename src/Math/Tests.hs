@@ -1,9 +1,31 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 import Test.HUnit
+import Test.QuickCheck
+
+import Data.Vector ((!))
+import Control.Applicative
 
 import Data.VectorSpace
 import Math.Spline.Knots
 import Math.Spline.BSpline
 import Math.Spline.NurbsSurface
+
+class Approx a where
+  (~~) :: a -> a -> Bool
+
+instance (Fractional a, Ord a) => Approx a where
+  (~~) a b = abs (a - b) < 0.001
+
+instance (Approx a, Approx b) => Approx (a,b) where
+  (x0, y0) ~~ (x1, y1) = x0~~x1 && y0~~y1
+
+instance (Approx a, Approx b, Approx c) => Approx (a,b,c) where
+  (x0,y0,z0) ~~ (x1,y1,z1) = x0~~x1 && y0~~y1 && z0~~z1
+
+instance Approx a => Approx [a] where
+  (~~) = and . zipWith (~~)
 
 cyl :: NurbsSurface
 cyl = NurbsSurface
@@ -21,6 +43,28 @@ cyl = NurbsSurface
 kLinear = mkKnots [0,0,1,1] -- degree 1
 
 kCircle = mkKnots [0,0,0,0.25,0.25,0.5,0.5,0.75,0.75,1,1,1] -- degree 2
+
+toZAxis (x,y,_) = sqrt (x**2 + y**2)
+
+knotCheck k u n | u < 0 = Nothing == n
+                | u > 1 = Nothing == n
+knotCheck k u (Just i) = knotsVector k ! i <= u && knotsVector k ! (i+1) >= u
+
+data UValue = UV Double
+
+instance Show UValue where
+  show (UV d) = show d
+
+instance Arbitrary UValue where
+  arbitrary = UV <$> choose (0,1)
+
+data SaneN = SaneN Int
+
+instance Show SaneN where
+  show (SaneN n) = show n
+
+instance Arbitrary SaneN where
+  arbitrary = SaneN <$> choose (2,100)
 
 knotsTest = test [
   "findSpan" ~: [
@@ -76,3 +120,8 @@ expectedU2 x = [u2 0 x, 2 * (u2 1 x), u2 2 x]
 
 s22 :: Double
 s22 = sqrt 2 / 2
+
+-- quickCheck (\(UV u) -> 1 == (sum $ basisFuns' 1 kCircle u))
+-- quickCheck (\u -> knotCheck kCircle u (findSpan kCircle u))
+-- quickCheck (\u -> knotCheck kLinear u (findSpan kLinear u))
+radius = quickCheck (\(SaneN n) -> (all.all) ((~~1). toZAxis) $ surfaceGrid cyl n n)
