@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+module Math.Tests where
+
 import Test.HUnit
 import Test.QuickCheck
 
@@ -25,7 +27,7 @@ instance (Approx a, Approx b, Approx c) => Approx (a,b,c) where
   (x0,y0,z0) ~~ (x1,y1,z1) = x0~~x1 && y0~~y1 && z0~~z1
 
 instance Approx a => Approx [a] where
-  (~~) = and . zipWith (~~)
+  a ~~ b = and . zipWith (~~) a $ b
 
 cyl :: NurbsSurface
 cyl = NurbsSurface
