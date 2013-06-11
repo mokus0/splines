@@ -272,7 +272,7 @@ knotSpans ks w
 -- If u is equal to the highest knot value, the highest knot with lower parameter
 -- is returned.
 findSpan :: Ord a => Knots a -> a -> Maybe Int
-findSpan k u = 
+findSpan k u =
   case minKnot k of
     Nothing -> Nothing
     Just (lo, _) | lo > u    -> Nothing
@@ -294,7 +294,7 @@ knotDomain :: Knots a -> Int -> Maybe (a,a)
 knotDomain ks@(Knots v) p = knotSpan ks p (V.length v-p-1)
 
 -- |@uniform deg nPts (lo,hi)@ constructs a uniformly-spaced knot vector over
--- the interval from @lo@ to @hi@ which, when used to construct a B-spline 
+-- the interval from @lo@ to @hi@ which, when used to construct a B-spline
 -- with @nPts@ control points will yield a clamped spline with degree @deg@.
 uniform :: (Ord s, Fractional s) => Int -> Int -> (s,s) -> Knots s
 uniform deg nPts (lo,hi) = ends `mappend` internal
