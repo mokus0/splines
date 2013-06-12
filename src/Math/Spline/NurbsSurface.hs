@@ -78,7 +78,7 @@ surfaceGrid :: NurbsSurface -- ^ surface to be evaluated
                -> Int       -- ^ number of points to evaluate on second (v) axis
                -> [[Pt]]    -- ^ each inner list shares a value of u
 surfaceGrid n uCt vCt = map f us where
-  f u = catMaybes $ map (evalSurface n $ u) vs
+  f u = mapMaybe (evalSurface n u) vs
   us = ctRange (uKnots n) (uDegree n) uCt
   vs = ctRange (vKnots n) (vDegree n) vCt
   ctRange ks p ct = case knotDomain ks p of
