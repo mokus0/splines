@@ -1,5 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE GADTs #-}
 
 module Math.NurbsSurface where
 
@@ -11,11 +13,22 @@ import Data.VectorSpace
 import Math.Spline.BSpline
 import Math.Spline.Knots
 
-data NurbsSurface s v = NurbsSurface {
-  uKnots :: Knots s,
-  vKnots :: Knots s,
-  controlPoints :: [[(s, v)]]
-  } deriving Show
+data NurbsSurface s v where
+     NurbsSurface :: (VectorSpace v, s ~ Scalar v, VectorSpace s, Fractional s, s ~ Scalar s, Ord s) =>
+                     Knots s -> Knots s -> [[(s, v)]] -> NurbsSurface s v
+
+instance (Show v, Show (Scalar v)) => Show (NurbsSurface s v) where
+  show (NurbsSurface u v cps) = concat ["NurbsSurface ", show u, " ", show v,
+                                        " ", show cps]
+
+uKnots :: NurbsSurface s v -> Knots (Scalar v)
+uKnots (NurbsSurface k _ _) = k
+
+vKnots :: NurbsSurface s v -> Knots (Scalar v)
+vKnots (NurbsSurface _ k _) = k
+
+controlPoints :: NurbsSurface s v -> [[(Scalar v, v)]]
+controlPoints (NurbsSurface _ _ cps) = cps
 
 uDegree :: NurbsSurface s v -> Int
 uDegree (NurbsSurface k _ cps) = m - n where
@@ -35,35 +48,33 @@ toH w v = (w, w *^ v)
 
 -- | @evalSurface n u v@ is the point on the surface n with
 --   parametric coördinates u, v
-evalSurface :: (VectorSpace v, s ~ Scalar v, Fractional s, s ~ Scalar s, Ord s, AdditiveGroup s, VectorSpace s) =>
-               NurbsSurface s v -> s -> s -> Maybe v
-evalSurface n u v = unH <$> evalSurface' n u v
+evalSurface :: NurbsSurface s v -> s -> s -> Maybe v
+evalSurface n@(NurbsSurface uk vk ps) u v = unH <$> evalSurface' n u v
 
-evalSurface' :: (VectorSpace v, s ~ Scalar v, Fractional s, s ~ Scalar s, Ord s, AdditiveGroup s, VectorSpace s) =>
-                NurbsSurface s v -> s -> s -> Maybe (s,v)
-evalSurface' n u v | isNothing uspan = Nothing
+evalSurface' :: NurbsSurface s v -> s -> s -> Maybe (s, v)
+evalSurface' n@(NurbsSurface uk vk ps) u v | isNothing uspan = Nothing
                    | isNothing vspan = Nothing
                    | otherwise = Just . head . head $ rightMult uP (transpose [vFuns]) where
-  uspan = findSpan (uKnots n) u
-  vspan = findSpan (vKnots n) v
+  uspan = findSpan uk u
+  vspan = findSpan vk v
   uDeg  = uDegree n
   vDeg  = vDegree n
-  uFuns = basisFuns' uDeg (uKnots n) u
-  vFuns = basisFuns' vDeg (vKnots n) v
+  uFuns = basisFuns' uDeg uk u
+  vFuns = basisFuns' vDeg vk v
   leftMult = genMMult (*^) (^+^) zeroV
   rightMult = genMMult (^*) (^+^) zeroV
-  rows = take (uDeg + 1) $ drop (fromJust uspan - uDeg) $ controlPoints n
+  rows = take (uDeg + 1) $ drop (fromJust uspan - uDeg) $ ps
   cps = map (take (vDeg + 1) . drop (fromJust vspan - vDeg)) rows
   uP    = leftMult [uFuns] cps
 
 -- | surfaceGrid evaluates the NurbsSurface over a grid of points.
 --   The grid is uniformly spaced (on each axis) in u, v, but not, in general,
 --   in R3.
-surfaceGrid :: (s ~ Scalar v, s ~ Scalar s, Fractional s, AdditiveGroup s, VectorSpace s, Enum s, VectorSpace v, Ord s)
-               => NurbsSurface s v -- ^ surface to be evaluated
-               -> Int           -- ^ number of points to evaluate on first (u) axis
-               -> Int           -- ^ number of points to evaluate on second (v) axis
-               -> [[v]]        -- ^ each inner list shares a value of u
+--surfaceGrid :: (s ~ Scalar v, s ~ Scalar s, Fractional s, AdditiveGroup s, VectorSpace s, Enum s, VectorSpace v, Ord s)
+               -- => NurbsSurface v -- ^ surface to be evaluated
+               -- -> Int           -- ^ number of points to evaluate on first (u) axis
+               -- -> Int           -- ^ number of points to evaluate on second (v) axis
+               -- -> [[v]]        -- ^ each inner list shares a value of u
 surfaceGrid n uCt vCt = map f us where
   f u = mapMaybe (evalSurface n u) vs
   us = ctRange (uKnots n) (uDegree n) uCt
