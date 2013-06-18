@@ -14,7 +14,7 @@ import Control.Applicative
 import Data.VectorSpace
 import Math.Spline.Knots
 import Math.Spline.BSpline
-import Math.Spline.NurbsSurface
+import Math.NurbsSurface
 
 class Approx a where
   (~~) :: a -> a -> Bool
@@ -31,7 +31,7 @@ instance (Approx a, Approx b, Approx c) => Approx (a,b,c) where
 instance Approx a => Approx [a] where
   a ~~ b = and $ zipWith (~~) a b
 
-cyl :: NurbsSurface
+cyl :: NurbsSurface Double (Double, Double, Double)
 cyl = NurbsSurface
       kLinear
       kCircle
@@ -129,7 +129,7 @@ expectedU2 x = [u2 0 x, 2 * u2 1 x, u2 2 x]
 s22 :: Double
 s22 = sqrt 2 / 2
 
--- quickCheck (\(UV u) -> 1 == (sum $ basisFuns' 1 kCircle u))
--- quickCheck (\u -> knotCheck kCircle u (findSpan kCircle u))
--- quickCheck (\u -> knotCheck kLinear u (findSpan kLinear u))
-radius = quickCheck (\(SaneN n) -> (all.all) ((~~1). toZAxis) $ surfaceGrid cyl n n)
+basisPartitionCheck = quickCheck (\(UV u) -> 1 == (sum $ basisFuns' 1 kCircle u))
+uSpanCheck          = quickCheck (\u -> knotCheck kCircle u (findSpan kCircle u))
+vSpanCheck          = quickCheck (\u -> knotCheck kLinear u (findSpan kLinear u))
+radiusCheck         = quickCheck (\(SaneN n) -> (all.all) ((~~1). toZAxis) $ surfaceGrid cyl n n)
