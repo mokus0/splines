@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE OverlappingInstances #-}
 
 module Math.Tests where
 
@@ -28,7 +29,7 @@ instance (Approx a, Approx b, Approx c) => Approx (a,b,c) where
   (x0,y0,z0) ~~ (x1,y1,z1) = x0~~x1 && y0~~y1 && z0~~z1
 
 instance Approx a => Approx [a] where
-  a ~~ b = and . zipWith (~~) a $ b
+  a ~~ b = and $ zipWith (~~) a b
 
 cyl :: NurbsSurface
 cyl = NurbsSurface
@@ -99,23 +100,27 @@ nurbsSurface = test [
                     "0,0.25" ~: Just (0,1,0) ~=? evalSurface cyl 0 0.25]],
   "surfaceGrid" ~: [
     -- only evaluates at knots
-    "cylinder" ~: ["2,5" ~: [[(1.0,0.0,0.0),(0.0,1.0,0.0),(-1.0,0.0,0.0),(0.0,-1.0,0.0),(1.0,0.0,0.0)],[(1.0,0.0,1.0),(0.0,1.0,1.0),(-1.0,0.0,1.0),(0.0,-1.0,1.0),(1.0,0.0,1.0)]] ~=? surfaceGrid cyl 2 5,
+    "cylinder" ~: [assertBool "2,5" $ 
+                   [[(1.0,0.0,0.0),(0.0,1.0,0.0),(-1.0,0.0,0.0),
+                     (0.0,-1.0,0.0),(1.0,0.0,0.0)],
+                    [(1.0,0.0,1.0),(0.0,1.0,1.0),(-1.0,0.0,1.0),
+                     (0.0,-1.0,1.0),(1.0,0.0,1.0)]] ~~ surfaceGrid cyl 2 5,
                    -- circle is very non-uniform in v
-                   "2,9" ~: [
+                   assertBool "2,9" $ [
                      [(1,0,0),(s22,s22,0),(0,1,0),(-s22,s22,0),
                       (-1,0,0),(-s22,-s22,0),(0,-1,0),(s22,-s22,0),(1,0,0)],
                      [(1,0,1),(s22,s22,1),(0,1,1),(-s22,s22,1),
                       (-1,0,1),(-s22,-s22,1),(0,-1,1),(s22,-s22,1),(1,0,1)]]
-                     ~=? surfaceGrid cyl 2 9,
+                     ~~ surfaceGrid cyl 2 9,
                    -- z-axis is linear in u
-                   "3 9" ~: [
+                   assertBool "3 9" $ [
                      [(1,0,0),(s22,s22,0),(0,1,0),(-s22,s22,0),
                       (-1,0,0),(-s22,-s22,0),(0,-1,0),(s22,-s22,0),(1,0,0)],
                      [(1,0,0.5),(s22,s22,0.5),(0,1,0.5),(-s22,s22,0.5),
                       (-1,0,0.5),(-s22,-s22,0.5),(0,-1,0.5),(s22,-s22,0.5),(1,0,0.5)],
                      [(1,0,1),(s22,s22,1),(0,1,1),(-s22,s22,1),
                       (-1,0,1),(-s22,-s22,1),(0,-1,1),(s22,-s22,1),(1,0,1)]]
-                     ~=? surfaceGrid cyl 3 9]]]
+                     ~~ surfaceGrid cyl 3 9]]]
 
 u2 n x = (1-x)**(2-n) * x**n
 
