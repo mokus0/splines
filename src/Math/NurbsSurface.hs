@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module Math.Spline.NurbsSurface where
+module Math.NurbsSurface where
 
 import Data.List
 import Data.Maybe
