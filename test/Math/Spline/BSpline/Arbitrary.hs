@@ -5,7 +5,7 @@ module Math.Spline.BSpline.Arbitrary where
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
-import qualified Data.Vector.Generic.Safe as V
+import qualified Data.Vector.Generic as V
 import Data.VectorSpace
 import Math.Spline
 import Math.Spline.BSpline

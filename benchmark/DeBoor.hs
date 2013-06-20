@@ -4,9 +4,9 @@
 import Criterion.Main
 
 import Data.List (find)
-import qualified Data.Vector.Generic.Safe as V
-import qualified Data.Vector.Safe as BV
-import qualified Data.Vector.Unboxed.Safe as UV
+import qualified Data.Vector.Generic as V
+import qualified Data.Vector as BV
+import qualified Data.Vector.Unboxed as UV
 import Math.Spline.BSpline
 import Math.Spline.BSpline.Reference
 import Math.Spline.Knots
