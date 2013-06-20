@@ -81,9 +81,16 @@ surfaceGrid n uCt vCt = map f us where
   f u = mapMaybe (evalSurface n u) vs
   us = ctRange (uKnots n) (uDegree n) uCt
   vs = ctRange (vKnots n) (vDegree n) vCt
-  ctRange ks p ct = case knotDomain ks p of
-    Nothing       -> []
-    Just (lo, hi) -> [lo, lo+(hi-lo)/(fromIntegral ct - 1)..hi]
+
+ctRange :: (Enum a, Fractional a) => Knots a -> Int -> Int -> [a]
+ctRange ks p ct = case knotDomain ks p of
+  Nothing       -> []
+  Just (lo, hi) -> linSpace lo hi ct where
+    -- linSpace should always include lo, hi,
+    -- unlike Haskell's [x0,x1..hi] notation
+    step l h c = (h-l)/(fromIntegral c - 1)
+    linSpace l h c = [l,l+step l h c .. h - step l h c] ++ [h]
+
 
 -- | Generalized matrix matrix multiply
 genMMult  :: (a -> b -> c)
