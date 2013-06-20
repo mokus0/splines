@@ -44,13 +44,17 @@ cyl = NurbsSurface
                 (0,-1,0), (1,-1,0),
                 (1,0,0)]
 
+kLinear :: Knots Double
 kLinear = mkKnots [0,0,1,1] -- degree 1
 
+kCircle :: Knots Double
 kCircle = mkKnots [0,0,0,0.25,0.25,0.5,0.5,0.75,0.75,1,1,1] -- degree 2
 
+toZAxis :: Floating a => (a,a,a) -> a
 toZAxis (x,y,_) = sqrt (x**2 + y**2)
 
-knotCheck k u n | u < 0 = isNothing n
+knotCheck :: (Num a, Ord a) => Knots a -> a -> Maybe Int -> Bool
+knotCheck _ u n | u < 0 = isNothing n
                 | u > 1 = isNothing n
 knotCheck k u (Just i) = knotsVector k ! i <= u && knotsVector k ! (i+1) >= u
 
@@ -70,6 +74,7 @@ instance Show SaneN where
 instance Arbitrary SaneN where
   arbitrary = SaneN <$> choose (2,100)
 
+knotsTest :: Test
 knotsTest = test [
   "findSpan" ~: [
      "linear" ~: ["0" ~: Just 1 ~=? findSpan kLinear 0
@@ -93,6 +98,7 @@ knotsTest = test [
                  "0.25" ~: expectedU2 0 ~=? basisFuns' 2 kCircle 0.25
                    ]]]
 
+nurbsSurface :: Test
 nurbsSurface = test [
   "evalSurface" ~: [
      "cylinder" ~: ["0,0" ~: Just (1,0,0) ~=? evalSurface cyl 0 0,
@@ -122,13 +128,16 @@ nurbsSurface = test [
                       (-1,0,1),(-s22,-s22,1),(0,-1,1),(s22,-s22,1),(1,0,1)]]
                      ~~ surfaceGrid cyl 3 9]]]
 
+u2 :: Floating a => a -> a -> a
 u2 n x = (1-x)**(2-n) * x**n
 
+expectedU2 :: Floating a => a -> [a]
 expectedU2 x = [u2 0 x, 2 * u2 1 x, u2 2 x]
 
 s22 :: Double
 s22 = sqrt 2 / 2
 
+basisPartitionCheck, uSpanCheck, vSpanCheck, radiusCheck :: IO ()
 basisPartitionCheck = quickCheck (\(UV u) -> 1 == (sum $ basisFuns' 1 kCircle u))
 uSpanCheck          = quickCheck (\u -> knotCheck kCircle u (findSpan kCircle u))
 vSpanCheck          = quickCheck (\u -> knotCheck kLinear u (findSpan kLinear u))
