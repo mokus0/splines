@@ -14,7 +14,7 @@ import Math.Spline.BSpline
 import Math.Spline.Knots
 
 data NurbsSurface s v where
-     NurbsSurface :: (VectorSpace v, s ~ Scalar v, VectorSpace s, Fractional s, s ~ Scalar s, Ord s) =>
+     NurbsSurface :: (VectorSpace v, s ~ Scalar v, VectorSpace s, Fractional s, s ~ Scalar s, Ord s, Enum s) =>
                      Knots s -> Knots s -> [[(s, v)]] -> NurbsSurface s v
 
 instance (Show v, Show (Scalar v)) => Show (NurbsSurface s v) where
@@ -49,7 +49,7 @@ toH w v = (w, w *^ v)
 -- | @evalSurface n u v@ is the point on the surface n with
 --   parametric coördinates u, v
 evalSurface :: NurbsSurface s v -> s -> s -> Maybe v
-evalSurface n@(NurbsSurface uk vk ps) u v = unH <$> evalSurface' n u v
+evalSurface n@(NurbsSurface _ _ _) u v = unH <$> evalSurface' n u v
 
 evalSurface' :: NurbsSurface s v -> s -> s -> Maybe (s, v)
 evalSurface' n@(NurbsSurface uk vk ps) u v | isNothing uspan = Nothing
@@ -71,10 +71,12 @@ evalSurface' n@(NurbsSurface uk vk ps) u v | isNothing uspan = Nothing
 --   The grid is uniformly spaced (on each axis) in u, v, but not, in general,
 --   in R3.
 --surfaceGrid :: (s ~ Scalar v, s ~ Scalar s, Fractional s, AdditiveGroup s, VectorSpace s, Enum s, VectorSpace v, Ord s)
-               -- => NurbsSurface v -- ^ surface to be evaluated
-               -- -> Int           -- ^ number of points to evaluate on first (u) axis
-               -- -> Int           -- ^ number of points to evaluate on second (v) axis
-               -- -> [[v]]        -- ^ each inner list shares a value of u
+               -- =>
+surfaceGrid :: (Enum (Scalar v), Fractional (Scalar v))
+               => NurbsSurface (Scalar v) v -- ^ surface to be evaluated
+               -> Int           -- ^ number of points to evaluate on first (u) axis
+               -> Int           -- ^ number of points to evaluate on second (v) axis
+               -> [[v]]        -- ^ each inner list shares a value of u
 surfaceGrid n uCt vCt = map f us where
   f u = mapMaybe (evalSurface n u) vs
   us = ctRange (uKnots n) (uDegree n) uCt
