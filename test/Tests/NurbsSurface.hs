@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
-module Math.Tests where
+module Tests.NurbsSurface where
 
 import Test.HUnit
 import Test.QuickCheck
