@@ -142,3 +142,24 @@ basisPartitionCheck = quickCheck (\(UV u) -> 1 == (sum $ basisFuns' 1 kCircle u)
 uSpanCheck          = quickCheck (\u -> knotCheck kCircle u (findSpan kCircle u))
 vSpanCheck          = quickCheck (\u -> knotCheck kLinear u (findSpan kLinear u))
 radiusCheck         = quickCheck (\(SaneN n) -> (all.all) ((~~1). toZAxis) $ surfaceGrid cyl n n)
+
+-- TODO instance Arbitrary Knots
+ctRangeLenCheck :: IO ()
+ctRangeLenCheck = quickCheck $ \(SaneN ct) ->
+  ct == length (ctRange kCircle 2 ct)
+
+ctRangeLimitCheck :: SaneN -> Bool
+ctRangeLimitCheck = \(SaneN ct) ->
+  let
+    us = ctRange kCircle 2 ct
+  in
+   head us ~~ 0 && last us ~~ 1
+
+gridPointCountVCheck :: IO ()
+gridPointCountVCheck = quickCheck $ \(SaneN u, SaneN v) ->
+  all (\l -> length l == v)
+      (surfaceGrid cyl u v)
+
+gridPointCountUProp :: (SaneN, SaneN) -> Bool
+gridPointCountUProp =  \(SaneN u, SaneN v) ->
+  length (surfaceGrid cyl u v) == u
