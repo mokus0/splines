@@ -53,6 +53,7 @@ Test-Suite splines-test
                         splines,
                         test-framework,
                         test-framework-quickcheck2,
+                        HUnit,
                         QuickCheck >= 2,
                         vector,
                         vector-space
