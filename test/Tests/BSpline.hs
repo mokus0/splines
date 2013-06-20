@@ -2,7 +2,7 @@ module Tests.BSpline where
 
 import Control.Applicative
 import Data.Maybe
-import Data.Vector.Safe as V
+import Data.Vector as V
 import Data.VectorSpace
 import Math.Polynomial (polyDeriv)
 import Math.Spline
