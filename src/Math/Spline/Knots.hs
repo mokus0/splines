@@ -36,6 +36,7 @@ module Math.Spline.Knots
     , knotsInSpan
     , knotSpans
     , knotDomain
+    , findSpan
     
     , uniform
     
@@ -48,6 +49,7 @@ import Control.Arrow ((***))
 import Control.Monad (guard)
 import Data.Foldable (Foldable(foldMap), maximum)
 import Data.List (sortBy, sort, unfoldr)
+import Data.Maybe (fromJust)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Ord
@@ -265,6 +267,23 @@ knotSpans ks w
     | otherwise = zip kts (drop w kts)
     where kts = knots ks
 
+-- | @findSpan kv p u@ returns i such that u falls between the @i@'th knot
+-- and knot @i+1@.  In particular, for multiple knots, the highest i is chosen.
+-- If u is equal to the highest knot value, the highest knot with lower parameter
+-- is returned.
+findSpan :: Ord a => Knots a -> a -> Maybe Int
+findSpan k u =
+  case minKnot k of
+    Nothing -> Nothing
+    Just (lo, _) | lo > u    -> Nothing
+    _ -> case maxKnot k of
+      Nothing                -> Nothing
+      Just (hi, m) | hi == u -> Just $ (numKnots k) - m - 1
+                   | hi <  u -> Nothing
+      _                      -> Just $ mult - 1 where
+        distinct = V.findIndex (> u) (distinctKnotsVector k)
+        mult = V.sum $ V.take (fromJust distinct) $ multiplicitiesVector k
+
 -- |@knotDomain kts p@ returns the domain of a B-spline or NURBS with knot
 -- vector @kts@ and degree @p@.  This is the subrange spanned by all
 -- except the first and last @p@ knots.  Outside this domain, the spline
@@ -275,7 +294,7 @@ knotDomain :: Knots a -> Int -> Maybe (a,a)
 knotDomain ks@(Knots v) p = knotSpan ks p (V.length v-p-1)
 
 -- |@uniform deg nPts (lo,hi)@ constructs a uniformly-spaced knot vector over
--- the interval from @lo@ to @hi@ which, when used to construct a B-spline 
+-- the interval from @lo@ to @hi@ which, when used to construct a B-spline
 -- with @nPts@ control points will yield a clamped spline with degree @deg@.
 uniform :: (Ord s, Fractional s) => Int -> Int -> (s,s) -> Knots s
 uniform deg nPts (lo,hi) = ends `mappend` internal

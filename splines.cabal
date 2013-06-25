@@ -33,7 +33,8 @@ Library
                         Math.Spline.Hermite
                         Math.Spline.ISpline
                         Math.Spline.Knots
-                        Math.Spline.MSpline
+                        Math.Spline.MSpline,
+                        Math.NurbsSurface
                         Math.NURBS
   other-modules:        Math.Spline.BSpline.Internal
   build-depends:        base >= 3 && < 5,
@@ -41,7 +42,6 @@ Library
                         polynomial,
                         vector >= 0.8,
                         vector-space
-
 Test-Suite splines-test
   type:                 exitcode-stdio-1.0
   hs-source-dirs:       test
@@ -53,6 +53,7 @@ Test-Suite splines-test
                         splines,
                         test-framework,
                         test-framework-quickcheck2,
+                        HUnit,
                         QuickCheck >= 2,
                         vector,
                         vector-space

@@ -1,7 +1,7 @@
 {-# LANGUAGE ParallelListComp, ExtendedDefaultRules, OverlappingInstances #-}
 module Tests.BSpline.Reference where
 
-import qualified Data.Vector.Safe as V
+import qualified Data.Vector as V
 import Math.Polynomial (evalPoly, polyDegree)
 import Math.Spline (BSpline, controlPoints, knotVector, splineDegree)
 import Math.Spline.BSpline.Reference

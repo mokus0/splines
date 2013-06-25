@@ -8,14 +8,18 @@ module Math.Spline.BSpline
     , splitBSpline
     , differentiateBSpline, integrateBSpline
     , deBoor
+    , basisFuns
+    , basisFuns'
     ) where
 
 import Math.Spline.Knots
 import Math.Spline.BSpline.Internal
 
 import Data.Maybe (fromMaybe)
+import Data.List
 import Data.VectorSpace
 import qualified Data.Vector.Generic as V
+import Data.Vector.Generic ((!))
 
 -- |@bSpline kts cps@ creates a B-spline with the given knot vector and control 
 -- points.  The degree is automatically inferred as the difference between the 
@@ -96,3 +100,27 @@ splitBSpline spline@(Spline p kv _) t
         ds1 = V.reverse (trimTo us1 (map V.last dss))
         
         trimTo kts = V.fromList . take (numKnots kts - p - 1)
+
+basisFuns :: ( VectorSpace a, Ord (Scalar a), Fractional (Scalar a), V.Vector v a
+     , V.Vector v (Scalar a)) =>
+     BSpline v a -> Scalar a -> [Scalar a]
+basisFuns (Spline p k _) u = basisFuns' p k u
+
+-- Piegl & Tiller A2.2
+-- As unintuitive as P&T's pseudo-c, but much less efficient
+basisFuns' :: (Ord a, Fractional a) => Int -> Knots a -> a -> [a]
+basisFuns' p ks u = case findSpan ks u of
+  Nothing -> []
+  Just i0 -> basis i0 p  where
+    k = knotsVector ks
+    left x  = u - k ! (i0+1-x)
+    right x = k ! (i0+x) - u
+    basis _ 0 = [1]
+    -- calculate basis functions of degree j from those of degree j-1
+    basis i j = outer $ foldl' (inner j) (0,0,[]) (basis i (j-1)) where
+    outer (saved, _, n) = reverse $ (saved:n)
+    inner j (saved, r, n) lower = (s, r', n') where
+      s = left (j-r) * temp
+      r' = r+1
+      n' = (saved + right (r+1) * temp):n
+      temp = lower / (right (r+1) + left (j-r))
