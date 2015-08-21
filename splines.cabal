@@ -18,6 +18,14 @@ description:            This is a fairly simple implementation of a
                         better style ideas come up.  Patches, suggestions
                         and/or feature requests are welcome.
 
+tested-with:            GHC == 7.0.4,
+                        GHC == 7.2.2,
+                        GHC == 7.4.2,
+                        GHC == 7.6.3,
+                        GHC == 7.8.4,
+                        GHC == 7.10.1,
+                        GHC == 7.11
+
 source-repository head
     type: git
     location: git://github.com/mokus0/splines.git
