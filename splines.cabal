@@ -65,6 +65,9 @@ Test-Suite splines-test
                         QuickCheck == 2.8.*,
                         vector,
                         vector-space
+  if impl(ghc == 7.0.*)
+    -- utf8-string-1.0.1 does not build on GHC 7.0.x
+    build-depends:      utf8-string == 1
 
 Benchmark splines-bench
   type:                 exitcode-stdio-1.0
