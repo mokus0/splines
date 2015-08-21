@@ -168,7 +168,7 @@ basisFunctions_tests =
 -- different interfaces to the exact same algorithm; if the results are off
 -- by even one ULP, then something is wrong.
 prop_basisFunctions_equals_bases = do
-    kts <- resize 15 arbitrary
+    kts <- resize 10 arbitrary
     x <- arbitrary
     return (bases kts x
         == [[f x | f <- basis] | basis <- basisFunctions kts])

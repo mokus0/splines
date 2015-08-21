@@ -459,7 +459,7 @@ prop_setKnotMultiplicity_preserves_others kts x (Multiplicity m) =
                 let k = n `mod` numKnots kts
                 return (knots kts !! k)
             else arbitrary
-        property  (knotMultiplicity y (setKnotMultiplicity x m kts)
+        return $ property (knotMultiplicity y (setKnotMultiplicity x m kts)
                 == if x == y then max m 0 else knotMultiplicity y kts)
 
 prop_setKnotMultiplicity_valid kts x (Multiplicity m) =

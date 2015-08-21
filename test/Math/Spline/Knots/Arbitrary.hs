@@ -71,9 +71,9 @@ instance Arbitrary a => Arbitrary (Smaller a) where
 -- The @take (1 + numDistinctKnots kts)@ part is just to limit the cases 
 -- considered to those that are possible for the given knot vector
 directed_test test kts = frequency $ take (1 + numDistinctKnots kts)
-        [ (1, everywhere)
-        , (1, atKnots)
-        , (5, onSpans)
+        [ (1, return everywhere)
+        , (1, return atKnots)
+        , (5, return onSpans)
         ]
     where
         everywhere = property (test kts)

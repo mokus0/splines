@@ -83,7 +83,7 @@ splitBSpline_tests =
 prop_splitBSpline_preserves_sum (NonEmptySpline f) =
     flip directed_test (knotVector f) $ \_kts x ->
         case splitBSpline f x of
-            Nothing -> property (x < x0 || x > x1)
+            Nothing -> return $ property (x < x0 || x > x1)
             Just (f1, f2) -> flip directed_test (knotVector f) $ \_kts y ->
                    evalNaturalBSpline f y
                 == evalNaturalBSpline f1 y + evalNaturalBSpline f2 y
