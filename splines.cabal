@@ -62,7 +62,7 @@ Test-Suite splines-test
                         test-framework,
                         test-framework-quickcheck2,
                         HUnit,
-                        QuickCheck >= 2,
+                        QuickCheck == 2.6.*,
                         vector,
                         vector-space
 
