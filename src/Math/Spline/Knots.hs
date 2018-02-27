@@ -53,6 +53,7 @@ import Data.Maybe (fromJust)
 import qualified Data.Map as M
 import Data.Monoid (Monoid(..))
 import Data.Ord
+import Data.Semigroup
 import qualified Data.Set as S (Set, fromAscList)
 import qualified Data.Vector as V
 
@@ -64,6 +65,9 @@ instance Show a => Show (Knots a) where
         ( showString "mkKnots "
         . showsPrec 11 (knots ks)
         )
+
+instance Ord a => Semigroup (Knots a) where
+    (<>) = mappend
 
 instance (Ord a) => Monoid (Knots a) where
     mempty = empty

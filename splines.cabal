@@ -49,12 +49,13 @@ Library
                         containers,
                         polynomial,
                         vector >= 0.8,
-                        vector-space
+                        vector-space,
+                        semigroups
 Test-Suite splines-test
   type:                 exitcode-stdio-1.0
   hs-source-dirs:       test
   main-is:              Main.hs
-  
+
   build-depends:        base >= 3 && <5,
                         containers,
                         polynomial,
